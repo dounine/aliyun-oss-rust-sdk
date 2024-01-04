@@ -180,7 +180,7 @@ impl<'a> OSS {
 
 #[cfg(test)]
 mod tests {
-    use crate::object::OSSObjectAPI;
+    use crate::object::ObjectAPI;
 
     use super::*;
 

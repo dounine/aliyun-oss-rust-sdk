@@ -5,7 +5,7 @@ use crate::error::Error;
 use crate::oss::{API, OSS};
 use crate::request::{RequestBuilder, RequestType};
 
-pub trait OSSObjectAPI {
+pub trait ObjectAPI {
     fn get_object<S: AsRef<str>>(
         &self,
         key: S,
@@ -13,7 +13,7 @@ pub trait OSSObjectAPI {
     ) -> Result<Vec<u8>, Error>;
 }
 
-impl OSSObjectAPI for OSS {
+impl ObjectAPI for OSS {
     fn get_object<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<Vec<u8>, Error> {
         let key = self.format_key(key);
         let mut header = HashMap::new();
