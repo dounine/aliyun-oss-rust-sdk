@@ -9,7 +9,7 @@ use crate::request::{RequestBuilder, RequestType};
 pub trait AuthAPI {
     fn sign<S: AsRef<str>>(
         &self,
-        verb: &RequestType,
+        method: &RequestType,
         object: S,
         headers: &HashMap<String, String>,
         build: &RequestBuilder,
@@ -17,7 +17,7 @@ pub trait AuthAPI {
 
     fn oss_sign<S: AsRef<str>>(
         &self,
-        verb: &RequestType,
+        method: &RequestType,
         object: S,
         headers: &HashMap<String, String>,
         build: &RequestBuilder,
@@ -27,7 +27,7 @@ pub trait AuthAPI {
 impl<'a> AuthAPI for OSS {
     fn sign<S: AsRef<str>>(
         &self,
-        verb: &RequestType,
+        method: &RequestType,
         key: S,
         headers: &HashMap<String, String>,
         build: &RequestBuilder,
@@ -68,7 +68,7 @@ impl<'a> AuthAPI for OSS {
         }
         let sign_str = format!(
             "{}\n{}\n{}\n{}\n{}{}",
-            verb.to_string(),
+            method.to_string(),
             build.content_md5.clone().unwrap_or_default(),
             build.content_type.clone().unwrap_or_default(),
             date,
@@ -82,8 +82,8 @@ impl<'a> AuthAPI for OSS {
         general_purpose::STANDARD.encode(&hasher.finalize().into_bytes())
     }
 
-    fn oss_sign<S: AsRef<str>>(&self, verb: &RequestType, object: S, headers: &HashMap<String, String>, build: &RequestBuilder) -> String {
-        let sign_str_base64 = self.sign(verb, object, headers, build);
+    fn oss_sign<S: AsRef<str>>(&self, method: &RequestType, object: S, headers: &HashMap<String, String>, build: &RequestBuilder) -> String {
+        let sign_str_base64 = self.sign(method, object, headers, build);
         format!("OSS {}:{}", self.key_id(), sign_str_base64)
     }
 }

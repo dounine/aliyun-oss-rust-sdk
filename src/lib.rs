@@ -16,5 +16,4 @@
 pub mod oss;
 pub mod object;
 pub mod request;
-pub mod error;
 pub mod auth;

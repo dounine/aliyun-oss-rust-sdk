@@ -1,9 +1,12 @@
 use std::collections::HashMap;
+use reqwest::header::{DATE, HeaderMap};
+use strum_macros::Display;
+use anyhow::Result;
 
 use tracing::debug;
 
 use crate::auth::AuthAPI;
-use crate::request::RequestBuilder;
+use crate::request::{RequestBuilder, RequestType};
 
 /// OSS配置
 pub struct OSS {
@@ -169,10 +172,61 @@ impl<'a> OSS {
         let bucket = dotenvy::var("OSS_BUCKET").expect("OSS_BUCKET not found");
         OSS::new(key_id, key_secret, endpoint, bucket)
     }
+    pub fn format_host<S: AsRef<str>>(&self, bucket: S, key: S) -> String {
+        if self.endpoint().starts_with("https") {
+            format!(
+                "https://{}.{}/{}",
+                bucket.as_ref(),
+                self.endpoint().replacen("https://", "", 1),
+                key.as_ref(),
+            )
+        } else {
+            format!(
+                "http://{}.{}/{}",
+                bucket.as_ref(),
+                self.endpoint().replacen("http://", "", 1),
+                key.as_ref(),
+            )
+        }
+    }
+
+    pub fn build_request<S: AsRef<str>>(&self, method: &RequestType, key: S, headers: HashMap<String, String>) -> Result<(String, HeaderMap)> {
+        let host = self.format_host(self.bucket(), key.as_ref().to_string());
+        let mut header = HeaderMap::new();
+        let date = self.date();
+        // header.insert(DATE, date.parse()?);
+        Ok(("".to_string(), header))
+    }
+    fn date(&self) -> String {
+        let now: chrono::DateTime<chrono::Local> = chrono::Local::now();
+        now.format("%a, %d %b %Y %T GMT").to_string()
+    }
 }
+
+// use thiserror::Error;
+//
+// #[derive(Error, Debug, Display)]
+// pub enum FileError {
+//     IoError(#[from] std::io::Error),
+// }
+//
+// #[derive(Error, Debug, Display)]
+// pub enum MyError {
+//     IoError(#[from] FileError)
+// }
+
+
+// impl From<std::io::Error> for MyError {
+//     fn from(err: std::io::Error) -> Self {
+//         MyError::IoError(FileError::IoError(err))
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
+    use std::io::Read;
+    use chrono::{DateTime, Utc};
+    use strum_macros::Display;
     use crate::object::ObjectAPI;
 
     use super::*;
@@ -185,8 +239,33 @@ mod tests {
             .init();
     }
 
+    pub fn date() -> String {
+        let now: chrono::DateTime<chrono::Local> = chrono::Local::now();
+        now.format("%a, %d %b %Y %T GMT").to_string()
+    }
+
+    fn pp<S: AsRef<str>>(s: S) {
+        println!("{}", s.as_ref());
+    }
+
+
+    fn open_file(file_name: &str) -> anyhow::Result<String, anyhow::Error> {
+        let mut file = std::fs::File::open(file_name)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        Ok(contents)
+    }
+
+    #[test]
+    fn test_read_file() {
+        open_file("a").unwrap();
+    }
+
     #[test]
     fn test_sign() {
+        let aa = &"".to_string();
+        pp(aa);
+        println!("{}", date());
         init_log();
         let oss = OSS::from_env();
         let build = RequestBuilder::new()

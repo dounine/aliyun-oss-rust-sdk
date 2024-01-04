@@ -1,7 +1,7 @@
 use std::collections::HashMap;
+use anyhow::Result;
 use tracing::debug;
 use crate::auth::AuthAPI;
-use crate::error::Error;
 use crate::oss::{API, OSS};
 use crate::request::{RequestBuilder, RequestType};
 
@@ -10,11 +10,11 @@ pub trait ObjectAPI {
         &self,
         key: S,
         build: RequestBuilder,
-    ) -> Result<Vec<u8>, Error>;
+    ) -> Result<Vec<u8>>;
 }
 
 impl ObjectAPI for OSS {
-    fn get_object<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<Vec<u8>, Error> {
+    fn get_object<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<Vec<u8>> {
         let key = self.format_key(key);
         let mut header = HashMap::new();
         let time = chrono::Local::now().naive_local();
