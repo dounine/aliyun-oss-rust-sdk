@@ -22,7 +22,6 @@ impl ObjectAPI for OSS {
         let signature = self.oss_sign(
             &RequestType::Get,
             key.as_str(),
-            "",
             &header,
             &build,
         );

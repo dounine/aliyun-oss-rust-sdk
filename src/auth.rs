@@ -11,7 +11,6 @@ pub trait AuthAPI {
         &self,
         verb: &RequestType,
         object: S,
-        oss_resources: S,
         headers: &HashMap<String, String>,
         build: &RequestBuilder,
     ) -> String;
@@ -20,7 +19,6 @@ pub trait AuthAPI {
         &self,
         verb: &RequestType,
         object: S,
-        oss_resources: S,
         headers: &HashMap<String, String>,
         build: &RequestBuilder,
     ) -> String;
@@ -31,7 +29,6 @@ impl<'a> AuthAPI for OSS {
         &self,
         verb: &RequestType,
         key: S,
-        oss_resources: S,
         headers: &HashMap<String, String>,
         build: &RequestBuilder,
     ) -> String {
@@ -52,7 +49,7 @@ impl<'a> AuthAPI for OSS {
             .collect::<Vec<_>>()
             .join("\n");
 
-        let mut oss_resource_str = self.format_oss_resource_str(self.bucket().as_str(), key.as_ref(), oss_resources.as_ref());
+        let mut oss_resource_str = self.format_oss_resource_str(self.bucket().as_str(), key.as_ref());
         if build.parameters.len() > 0 {
             let mut params = build
                 .parameters
@@ -85,8 +82,8 @@ impl<'a> AuthAPI for OSS {
         general_purpose::STANDARD.encode(&hasher.finalize().into_bytes())
     }
 
-    fn oss_sign<S: AsRef<str>>(&self, verb: &RequestType, object: S, oss_resources: S, headers: &HashMap<String, String>, build: &RequestBuilder) -> String {
-        let sign_str_base64 = self.sign(verb, object, oss_resources, headers, build);
+    fn oss_sign<S: AsRef<str>>(&self, verb: &RequestType, object: S, headers: &HashMap<String, String>, build: &RequestBuilder) -> String {
+        let sign_str_base64 = self.sign(verb, object, headers, build);
         format!("OSS {}:{}", self.key_id(), sign_str_base64)
     }
 }

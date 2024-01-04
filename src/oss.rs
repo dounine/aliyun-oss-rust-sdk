@@ -40,7 +40,7 @@ pub trait API {
         }
     }
 
-    fn format_oss_resource_str<S: AsRef<str>>(&self, bucket: S, key: S, oss_resources: S) -> String;
+    fn format_oss_resource_str<S: AsRef<str>>(&self, bucket: S, key: S) -> String;
 }
 
 pub trait OSSAPI: OSSInfo + API {
@@ -115,7 +115,6 @@ impl API for OSS {
         let signature = self.sign(
             &build.method,
             key.as_str(),
-            "",
             &header,
             &build,
         );
@@ -142,18 +141,12 @@ impl API for OSS {
         )
     }
 
-    fn format_oss_resource_str<S: AsRef<str>>(&self, bucket: S, key: S, oss_resources: S) -> String {
+    fn format_oss_resource_str<S: AsRef<str>>(&self, bucket: S, key: S) -> String {
         let bucket = bucket.as_ref();
-        let oss_resources = oss_resources.as_ref();
-        let oss_resources = if oss_resources != "" {
-            String::from("?") + oss_resources
-        } else {
-            String::new()
-        };
         if bucket == "" {
-            format!("/{}{}", bucket, oss_resources)
+            format!("/{}", bucket)
         } else {
-            format!("/{}{}{}", bucket, key.as_ref(), oss_resources)
+            format!("/{}{}", bucket, key.as_ref())
         }
     }
 }
