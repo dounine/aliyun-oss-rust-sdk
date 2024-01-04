@@ -4,6 +4,9 @@
 # 功能列表
 1. 签名URL下载(支持自定义域名)支持限速下载。
 ```rust
+use aliyun_oss_rust_sdk::oss::{OSS, RequestBuilder};
+use aliyun_oss_rust_sdk::OSSAPI;
+
 let oss = OSS::new(
             "my_key_id",
             "my_key_secret",
