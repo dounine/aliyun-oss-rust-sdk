@@ -14,6 +14,7 @@
 //!
 //! 5、文件列表
 pub mod oss;
-
-pub use oss::OSSAPI;
-pub use oss::OSS;
+pub mod object;
+pub mod request;
+pub mod error;
+pub mod auth;
