@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::os::fd::AsFd;
 use base64::{engine::general_purpose, Engine as _};
 use hmac::{Hmac, Mac};
 use strum_macros::{Display, EnumString};
@@ -33,30 +34,33 @@ impl RequestBuilder {
         self.expire = expire;
         self
     }
-    pub fn response_content_disposition(mut self, file_name: &str) -> Self {
-        self.parameters.insert("response-content-disposition".to_string(), format!("attachment;filename={}", file_name));
+    pub fn response_content_disposition<S: AsRef<str>>(mut self, file_name: S) -> Self {
+        self.parameters.insert("response-content-disposition".to_string(), format!("attachment;filename={}", file_name.as_ref()));
         self
     }
-    pub fn response_content_encoding(mut self, encoding: &str) -> Self {
-        self.parameters.insert("response-content-encoding".to_string(), encoding.to_string());
+    pub fn response_content_encoding<S: AsRef<String>>(mut self, encoding: S) -> Self {
+        self.parameters.insert("response-content-encoding".to_string(), encoding.as_ref().to_string());
         self
     }
-    pub fn oss_download_speed_limit(mut self, speed: i32) -> Self {
+    pub fn oss_download_speed_limit<S: Into<i32>>(mut self, speed: S) -> Self {
+        let speed = speed.into();
         assert!(speed >= 30, "speed must be greater than 30kb");
         self.parameters.insert("x-oss-traffic-limit".to_string(), (speed * 1024 * 8).to_string());
         self
     }
-    pub fn oss_download_allow_ip(mut self, ip: &str, mask: i32) -> Self {
-        self.parameters.insert("x-oss-ac-source-ip".to_string(), ip.to_string());
-        self.parameters.insert("x-oss-ac-subnet-mask".to_string(), mask.to_string());
+    pub fn oss_download_allow_ip<IP, S>(mut self, ip: IP, mask: S) -> Self
+        where IP: AsRef<str>, S: Into<i32>
+    {
+        self.parameters.insert("x-oss-ac-source-ip".to_string(), ip.as_ref().to_string());
+        self.parameters.insert("x-oss-ac-subnet-mask".to_string(), mask.into().to_string());
         self
     }
     pub fn oss_ac_forward_allow(mut self) -> Self {
         self.parameters.insert("x-oss-ac-forwarded-for".to_string(), "true".to_string());
         self
     }
-    pub fn oss_header_put(mut self, key: &str, value: &str) -> Self {
-        self.oss_headers.insert(key.to_string(), value.to_string());
+    pub fn oss_header_put<S: AsRef<str>>(mut self, key: S, value: S) -> Self {
+        self.oss_headers.insert(key.as_ref().to_string(), value.as_ref().to_string());
         self
     }
 }
@@ -69,9 +73,10 @@ pub trait OSSInfo {
 }
 
 pub trait API {
-    fn sign_url(&self, key: &str, build: RequestBuilder) -> String;
-    fn key_urlencode(&self, key: &str) -> String {
+    fn sign_url<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> String;
+    fn key_urlencode<S: AsRef<str>>(&self, key: S) -> String {
         key
+            .as_ref()
             .split("/")
             .map(|x| urlencoding::encode(x))
             .collect::<Vec<_>>()
@@ -126,11 +131,11 @@ pub trait OSSAPI: OSSInfo + API {
 impl OSSAPI for OSS {}
 
 pub trait AuthAPI {
-    fn sign(
+    fn sign<S: AsRef<str>>(
         &self,
-        verb: &str,
-        object: &str,
-        oss_resources: &str,
+        verb: S,
+        object: S,
+        oss_resources: S,
         headers: &HashMap<String, String>,
         build: &RequestBuilder,
     ) -> String;
@@ -146,7 +151,8 @@ impl OSSInfo for OSS {
 }
 
 impl API for OSS {
-    fn sign_url(&self, key: &str, build: RequestBuilder) -> String {
+    fn sign_url<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> String {
+        let key = key.as_ref();
         let object = if key.starts_with("/") {
             key.to_string()
         } else {
@@ -186,11 +192,11 @@ impl API for OSS {
 }
 
 impl<'a> AuthAPI for OSS {
-    fn sign(
+    fn sign<S: AsRef<str>>(
         &self,
-        verb: &str,
-        key: &str,
-        oss_resources: &str,
+        verb: S,
+        key: S,
+        oss_resources: S,
         headers: &HashMap<String, String>,
         build: &RequestBuilder,
     ) -> String {
@@ -211,7 +217,7 @@ impl<'a> AuthAPI for OSS {
             .collect::<Vec<_>>()
             .join("\n");
 
-        let mut oss_resource_str = get_oss_resource_str(self.bucket.as_str(), key, oss_resources);
+        let mut oss_resource_str = get_oss_resource_str(self.bucket.as_str(), key.as_ref(), oss_resources.as_ref());
         if build.parameters.len() > 0 {
             let mut params = build
                 .parameters
@@ -230,7 +236,7 @@ impl<'a> AuthAPI for OSS {
         }
         let sign_str = format!(
             "{}\n{}\n{}\n{}\n{}{}",
-            verb,
+            verb.as_ref(),
             build.content_md5.clone().unwrap_or_default(),
             build.content_type.clone().unwrap_or_default(),
             date,
@@ -246,10 +252,7 @@ impl<'a> AuthAPI for OSS {
 }
 
 impl<'a> OSS {
-    pub fn new<S>(key_id: S, key_secret: S, endpoint: S, bucket: S) -> Self
-        where
-            S: Into<String>,
-    {
+    pub fn new<S: Into<String>>(key_id: S, key_secret: S, endpoint: S, bucket: S) -> Self {
         OSS {
             key_id: key_id.into(),
             key_secret: key_secret.into(),
@@ -269,7 +272,9 @@ impl<'a> OSS {
 }
 
 #[inline]
-fn get_oss_resource_str(bucket: &str, key: &str, oss_resources: &str) -> String {
+fn get_oss_resource_str<S: AsRef<str>>(bucket: S, key: S, oss_resources: S) -> String {
+    let bucket = bucket.as_ref();
+    let oss_resources = oss_resources.as_ref();
     let oss_resources = if oss_resources != "" {
         String::from("?") + oss_resources
     } else {
@@ -278,7 +283,7 @@ fn get_oss_resource_str(bucket: &str, key: &str, oss_resources: &str) -> String 
     if bucket == "" {
         format!("/{}{}", bucket, oss_resources)
     } else {
-        format!("/{}{}{}", bucket, key, oss_resources)
+        format!("/{}{}{}", bucket, key.as_ref(), oss_resources)
     }
 }
 
@@ -299,6 +304,23 @@ pub enum RequestType {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn process_str(str: &str) {
+        let mut str = str.to_string();
+        str.push_str("hello");
+        println!("{}", str);
+    }
+
+    fn process_str2<S: AsRef<str>>(str: S) {
+        let mut str = str.as_ref();
+        println!("{}", str);
+    }
+
+    #[test]
+    fn test_fn() {
+        process_str("hello");
+        process_str2("".to_string());
+    }
 
     #[test]
     fn test_sign() {
