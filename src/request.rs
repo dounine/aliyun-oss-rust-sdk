@@ -20,6 +20,7 @@ pub enum RequestType {
 #[derive(Clone, Debug)]
 pub struct RequestBuilder {
     pub cdn: Option<String>,
+    pub https: bool,
     pub method: RequestType,
     pub expire: Seconds,
     pub headers: HashMap<String, String>,
@@ -33,6 +34,7 @@ impl RequestBuilder {
     pub fn new() -> Self {
         RequestBuilder {
             cdn: None,
+            https: true,
             method: RequestType::Get,
             expire: 60,
             headers: HashMap::new(),
@@ -41,6 +43,10 @@ impl RequestBuilder {
             content_md5: None,
             oss_headers: HashMap::new(),
         }
+    }
+    pub fn with_http(mut self) -> Self {
+        self.https = false;
+        self
     }
     pub fn with_cdn<S: AsRef<str>>(mut self, cdn: S) -> Self {
         self.cdn = Some(cdn.as_ref().to_string());

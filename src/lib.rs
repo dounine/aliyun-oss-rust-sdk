@@ -2,9 +2,19 @@
 //!
 //! 本项目是阿里云OSS的Rust SDK，基于HTTP API实现。
 //!
-//! # 功能列表：
+//! ## 文件下载
+//! ```rust
+//! use aliyun_oss_rust_sdk::object::ObjectAPI;
+//! use aliyun_oss_rust_sdk::oss::OSS;
+//! use aliyun_oss_rust_sdk::request::RequestBuilder;
 //!
-//! ## 1. 签名下载URL
+//! let oss = OSS::from_env();
+//! let build = RequestBuilder::new();
+//! let bytes = oss.get_object("/hello.txt", &build).unwrap();
+//! println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
+//! ```
+//!
+//! ### 签名URL(下载)
 //! 自定义域名/限速下载/过期时间/自定义content-type
 //! ```rust
 //! use aliyun_oss_rust_sdk::oss::{OSS,RequestBuilder};
@@ -18,7 +28,7 @@
 //!             );
 //! let build = RequestBuilder::new()
 //!     .expire(60)
-//!     //.with_cdn("https://mydomain.com")
+//!     //.with_cdn("https://mydomain.com") //使用cdn后，无法限制ip访问
 //!     .oss_download_speed_limit(30);
 //! let download_url = oss.sign_download_url(
 //!     "/ipas/cn/-10/imem内存修改器_1.0.0.ipa",
@@ -26,9 +36,10 @@
 //! );
 //! println!("download_url: {}", download_url);
 //! ```
-//! ## 2. 签名上传URL
-//! 允许前端简单上传文件，精确控制请用功能4：获取上传对象的policy方式上传
-//! 自定义域名/限速上传/过期时间/自定义content-type
+//! ## 签名URL(上传)
+//! . 允许前端简单上传文件，精确控制请用功能4：获取上传对象的policy方式上传
+//!
+//! . 自定义域名/限速上传/过期时间/自定义content-type
 //! ```rust
 //! use aliyun_oss_rust_sdk::oss::{OSS, RequestBuilder};
 //! use aliyun_oss_rust_sdk::url::UrlApi;
@@ -45,18 +56,7 @@
 //!  println!("upload_url: {}", upload_url);
 //! //使用postman测试上传即可，PS:要注意content-type要和build中的一致
 //! ```
-//! ## 3. 文件下载
-//! ```rust
-//! use aliyun_oss_rust_sdk::object::ObjectAPI;
-//! use aliyun_oss_rust_sdk::oss::OSS;
-//! use aliyun_oss_rust_sdk::request::RequestBuilder;
-//!
-//! let oss = OSS::from_env();
-//! let build = RequestBuilder::new();
-//! let bytes = oss.get_object("/hello.txt", &build).unwrap();
-//! println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
-//! ```
-//! ## 4. 获取上传对象的policy
+//! ## 获取上传对象的policy
 //! 用于前端直传可精确控制上传文件的类型、大小、过期时间、上传目录等
 //! ```rust
 //! use aliyun_oss_rust_sdk::object::{ObjectAPI, PolicyBuilder};
@@ -74,15 +74,15 @@
 //! //key为上传的文件名包含路径、例如：upload/mydir/test.txt
 //! //file为上传的文件，类型跟with_content_type一致
 //! ```
-//! ## 5. 上传文件
+//! ## 上传文件
 //!
 //! - [ ] 待做
 //!
-//! ## 5. 文件删除
+//! ## 文件删除
 //!
 //! - [ ] 待做
 //!
-//! ## 7. 文件列表
+//! ## 文件列表
 //!
 //! - [ ] 待做
 pub mod oss;

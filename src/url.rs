@@ -57,7 +57,12 @@ impl UrlApi for OSS {
             debug!("download_url: {}", download_url);
             download_url
         } else {
-            let download_url = format!("{}.{}{}", self.bucket(), self.endpoint(), sign);
+            let schema = if build.https {
+                "https://"
+            } else {
+                "http://"
+            };
+            let download_url = format!("{}{}.{}{}", schema, self.bucket(), self.endpoint(), sign);
             debug!("download_url: {}", download_url);
             download_url
         }
@@ -72,7 +77,12 @@ impl UrlApi for OSS {
             debug!("upload_url: {}", download_url);
             download_url
         } else {
-            let download_url = format!("{}.{}{}", self.bucket(), self.endpoint(), sign);
+            let schema = if build.https {
+                "https://"
+            } else {
+                "http://"
+            };
+            let download_url = format!("{}{}.{}{}", schema, self.bucket(), self.endpoint(), sign);
             debug!("upload_url: {}", download_url);
             download_url
         }
@@ -130,11 +140,13 @@ mod tests {
         init_log();
         let oss = OSS::from_env();
         let build = RequestBuilder::new()
-            .with_cdn("http://cdn.ipadump.com")
+            .with_cdn("https://cdn.ipadump.com")
             .expire(60)
-            .oss_download_speed_limit(30);
+            .oss_download_allow_ip("14.145.28.62", 32);
+        // .oss_download_speed_limit(30);
         oss.sign_download_url(
-            "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
+            "hello.txt",
+            // "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
             &build,
         );
     }
