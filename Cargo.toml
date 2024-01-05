@@ -1,9 +1,9 @@
 [package]
 name = "aliyun-oss-rust-sdk"
-version = "0.0.6"
+version = "0.0.7"
 edition = "2021"
 authors = ["lake"]
-description = "阿里云OSS Rust SDK"
+description = "阿里云©Official OSS Rust SDK(标准库)"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
