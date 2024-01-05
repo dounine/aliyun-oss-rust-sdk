@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use reqwest::header::{DATE, HeaderMap};
+use reqwest::header::{AUTHORIZATION, DATE, HeaderMap};
 use strum_macros::Display;
 use anyhow::Result;
+use chrono::{DateTime, Utc};
 
 use tracing::debug;
 
@@ -24,7 +25,7 @@ pub trait OSSInfo {
 }
 
 pub trait API {
-    fn sign_url<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> String;
+    fn sign_url<S: AsRef<str>>(&self, key: S, build: &mut RequestBuilder) -> String;
     fn key_urlencode<S: AsRef<str>>(&self, key: S) -> String {
         key
             .as_ref()
@@ -47,46 +48,34 @@ pub trait API {
 }
 
 pub trait OSSAPI: OSSInfo + API {
-    /// 签名URL,分享下载
+    /// 签名下载URL
+    ///
     /// # 使用例子
     ///
     /// ```
     /// use aliyun_oss_rust_sdk::oss::{OSS, OSSAPI, RequestBuilder};
     /// let oss = OSS::from_env();//也可以使用OSS::new()方法传递参数
     /// let build = RequestBuilder::new()
+    ///    //.with_cdn("https://mydomain.com")
     ///    .expire(60) //60秒链接过期
     ///   .oss_download_speed_limit(30);//限速30kb
-    /// let download_url = oss.sign_url_with_endpoint(
+    /// let download_url = oss.sign_download_url(
     ///     "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
-    ///     build
+    ///     &build
     ///     );
     ///  println!("download_url: {}", download_url);
     /// ```
-    fn sign_url_with_endpoint(&self, key: &str, build: RequestBuilder) -> String {
-        format!("{}.{}{}", self.bucket(), self.endpoint(), self.sign_url(key, build))
-    }
-
-    /// 签名URL,分享下载
-    /// 使用自定义域名
-    /// # 使用例子
-    ///
-    /// ```
-    /// use aliyun_oss_rust_sdk::oss::{OSS, OSSAPI, RequestBuilder};
-    /// let oss = OSS::from_env();//也可以使用OSS::new()方法传递参数
-    /// let build = RequestBuilder::new()
-    ///    .expire(60) //60秒链接过期
-    ///   .oss_download_speed_limit(30);//限速30kb
-    /// let download_url = oss.sign_url_with_cdn(
-    ///     "https://mydomain.com",
-    ///     "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
-    ///     build
-    ///     );
-    ///  println!("download_url: {}", download_url);
-    /// ```
-    fn sign_url_with_cdn(&self, cdn: &str, key: &str, build: RequestBuilder) -> String {
-        let download_url = format!("{}{}", cdn, self.sign_url(key, build));
-        debug!("download_url: {}", download_url);
-        download_url
+    fn sign_download_url(&self, key: &str, build: &mut RequestBuilder) -> String {
+        let sign = self.sign_url(key, build);
+        if let Some(cdn) = &build.cdn {
+            let download_url = format!("{}{}", cdn, sign);
+            debug!("download_url: {}", download_url);
+            download_url
+        } else {
+            let download_url = format!("{}.{}{}", self.bucket(), self.endpoint(), sign);
+            debug!("download_url: {}", download_url);
+            download_url
+        }
     }
 }
 
@@ -110,15 +99,12 @@ impl OSSInfo for OSS {
 }
 
 impl API for OSS {
-    fn sign_url<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> String {
+    fn sign_url<S: AsRef<str>>(&self, key: S, build: &mut RequestBuilder) -> String {
         let key = self.format_key(key);
-        let mut header = HashMap::new();
-        let expiration = chrono::Local::now().naive_local() + chrono::Duration::seconds(build.expire);
-        header.insert("Date".to_string(), expiration.timestamp().to_string());
+        let expiration = chrono::Local::now() + chrono::Duration::seconds(build.expire);
+        build.headers.insert(DATE.to_string(), expiration.timestamp().to_string());
         let signature = self.sign(
-            &build.method,
             key.as_str(),
-            &header,
             &build,
         );
         debug!("signature: {}", signature);
@@ -173,32 +159,44 @@ impl<'a> OSS {
         OSS::new(key_id, key_secret, endpoint, bucket)
     }
     pub fn format_host<S: AsRef<str>>(&self, bucket: S, key: S) -> String {
+        let key = if key.as_ref().starts_with("/") {
+            key.as_ref().to_string()
+        } else {
+            format!("/{}", key.as_ref())
+        };
         if self.endpoint().starts_with("https") {
             format!(
-                "https://{}.{}/{}",
+                "https://{}.{}{}",
                 bucket.as_ref(),
                 self.endpoint().replacen("https://", "", 1),
-                key.as_ref(),
+                key,
             )
         } else {
             format!(
-                "http://{}.{}/{}",
+                "http://{}.{}{}",
                 bucket.as_ref(),
                 self.endpoint().replacen("http://", "", 1),
-                key.as_ref(),
+                key,
             )
         }
     }
 
-    pub fn build_request<S: AsRef<str>>(&self, method: &RequestType, key: S, headers: HashMap<String, String>) -> Result<(String, HeaderMap)> {
+    pub fn build_request<S: AsRef<str>>(&self, key: S, mut build: RequestBuilder) -> Result<(String, HeaderMap)> {
         let host = self.format_host(self.bucket(), key.as_ref().to_string());
         let mut header = HeaderMap::new();
         let date = self.date();
-        // header.insert(DATE, date.parse()?);
-        Ok(("".to_string(), header))
+        header.insert(DATE, date.parse()?);
+        build.headers.insert(DATE.to_string(), date);
+        let key = key.as_ref();
+        let authorization = self.oss_sign(
+            key,
+            &build,
+        );
+        header.insert(AUTHORIZATION, authorization.parse()?);
+        Ok((host, header))
     }
-    fn date(&self) -> String {
-        let now: chrono::DateTime<chrono::Local> = chrono::Local::now();
+    pub fn date(&self) -> String {
+        let now: DateTime<Utc> = Utc::now();
         now.format("%a, %d %b %Y %T GMT").to_string()
     }
 }
@@ -268,23 +266,13 @@ mod tests {
         println!("{}", date());
         init_log();
         let oss = OSS::from_env();
-        let build = RequestBuilder::new()
+        let mut build = RequestBuilder::new()
+            .with_cdn("http://cdn.ipadump.com")
             .expire(60)
             .oss_download_speed_limit(30);
-        oss.sign_url_with_cdn(
-            "http://cdn.ipadump.com",
+        oss.sign_download_url(
             "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
-            build,
+            &mut build,
         );
-    }
-
-    #[test]
-    fn test_oss_sign() {
-        init_log();
-        let oss = OSS::from_env();
-        let build = RequestBuilder::new()
-            .expire(60)
-            .oss_download_speed_limit(30);
-        oss.get_object("/hello.txt", build).expect("TODO: panic message");
     }
 }
