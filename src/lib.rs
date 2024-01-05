@@ -1,16 +1,18 @@
 //! # aliyun-oss-rust-sdk
+//! [![Latest Version](https://img.shields.io/crates/v/aliyun-oss-rust-sdk.svg)](https://crates.io/crates/aliyun-oss-rust-sdk)
 //!
 //! 阿里云 © Alibaba Cloud Official Oss SDK(标准库)
 //!
-//! 1. [文件下载](#file_download)
-//! 2. [签名URL(下载)](#sign_url_download)
-//! 3. [签名URL(上传)](#sign_url_upload)
-//! 4. [获取上传对象的policy](#get_upload_object_policy)
-//! 5. [上传文件(本地文件)](#put_object_from_file)
-//! 6. [上传文件(内存)](#pub_object_from_buffer)
-//! 7. [文件删除](#delete_object)
+//! # 使用指南
 //!
-//! <span id="file_download"></span>
+//! 1. [文件下载](#文件下载)
+//! 2. [签名下载](#签名下载)
+//! 3. [签名上传](#签名上传)
+//! 4. [获取上传对象的policy](#获取上传对象的policy)
+//! 5. [上传本地文件](#上传本地文件)
+//! 6. [上传内存文件](#上传内存文件)
+//! 7. [文件删除](#文件删除)
+//!
 //! ## 文件下载
 //! ```rust
 //! use aliyun_oss_rust_sdk::object::ObjectAPI;
@@ -23,8 +25,7 @@
 //! println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
 //! ```
 //!
-//! <span id="sign_url_download"></span>
-//! ### 签名URL(下载)
+//! ### 签名下载
 //! 自定义域名/限速下载/过期时间/自定义content-type
 //! ```rust
 //! use aliyun_oss_rust_sdk::oss::{OSS,RequestBuilder};
@@ -46,8 +47,7 @@
 //! );
 //! println!("download_url: {}", download_url);
 //! ```
-//! <span id="sign_url_upload"></span>
-//! ## 签名URL(上传)
+//! ## 签名上传
 //! . 允许前端简单上传文件，精确控制请用功能4：获取上传对象的policy方式上传
 //!
 //! . 自定义域名/限速上传/过期时间/自定义content-type
@@ -68,7 +68,6 @@
 //! //使用postman测试上传即可，PS:要注意content-type要和build中的一致
 //! ```
 //!
-//! <span id="get_upload_object_policy"></span>
 //! ## 获取上传对象的policy
 //! 用于前端直传可精确控制上传文件的类型、大小、过期时间、上传目录等
 //! ```rust
@@ -89,8 +88,7 @@
 //! //file为上传的文件，类型跟with_content_type一致
 //! ```
 //!
-//! <span id="put_object_from_file"></span>
-//! ## 上传文件(本地文件)
+//! ## 上传本地文件
 //! ```rust
 //! use aliyun_oss_rust_sdk::object::ObjectAPI;
 //! use aliyun_oss_rust_sdk::oss::OSS;
@@ -102,8 +100,7 @@
 //! let file_path = "./hello.txt";
 //! oss.put_object_from_file("/hello.txt", file_path, &builder).unwrap();
 //! ```
-//! <span id="pub_object_from_buffer"></span>
-//! ## 上传文件(内存)
+//! ## 上传内存文件
 //! ```rust
 //! use aliyun_oss_rust_sdk::object::ObjectAPI;
 //! use aliyun_oss_rust_sdk::oss::OSS;
@@ -116,7 +113,6 @@
 //! let buffer = std::fs::read(file_path).unwrap();
 //! oss.pub_object_from_buffer("/hello.txt", buffer.as_slice(), &builder).unwrap();
 //! ```
-//! <span id="delete_object"></span>
 //! ## 文件删除
 //! ```rust
 //! use aliyun_oss_rust_sdk::object::ObjectAPI;

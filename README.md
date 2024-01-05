@@ -6,11 +6,11 @@
 # 使用指南
 
 1. [文件下载](#文件下载)
-2. [签名URL(下载)](#签名URL(下载))
-3. [签名URL(上传)](#签名URL(上传))
+2. [签名下载](#签名下载)
+3. [签名上传](#签名上传)
 4. [获取上传对象的policy](#获取上传对象的policy)
-5. [上传文件(本地文件)](#上传文件(本地文件))
-6. [上传文件(内存)](#上传文件(内存))
+5. [上传本地文件](#上传本地文件)
+6. [上传内存文件](#上传内存文件)
 7. [文件删除](#文件删除)
 
 ## 文件下载
@@ -25,7 +25,7 @@ let bytes = oss.get_object("/hello.txt", &build).unwrap();
 println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
 ```
 
-### 签名URL(下载)
+### 签名下载
 自定义域名/限速下载/过期时间/自定义content-type
 ```rust
 use aliyun_oss_rust_sdk::oss::{OSS,RequestBuilder};
@@ -47,7 +47,7 @@ let download_url = oss.sign_download_url(
 );
 println!("download_url: {}", download_url);
 ```
-## 签名URL(上传)
+## 签名上传
 . 允许前端简单上传文件，精确控制请用功能4：获取上传对象的policy方式上传
 
 . 自定义域名/限速上传/过期时间/自定义content-type
@@ -73,6 +73,7 @@ let upload_url = oss.sign_upload_url(
 ```rust
 use aliyun_oss_rust_sdk::object::{ObjectAPI, PolicyBuilder};
 use aliyun_oss_rust_sdk::oss::OSS;
+
 let oss = OSS::from_env();
 let policy_builder = PolicyBuilder::new()
             .with_expire(60 * 60)//1个小时过期
@@ -87,22 +88,24 @@ println!("policy: {:?}", policy);
 //file为上传的文件，类型跟with_content_type一致
 ```
 
-## 上传文件(本地文件)
+## 上传本地文件
 ```rust
 use aliyun_oss_rust_sdk::object::ObjectAPI;
 use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
+
 let oss = OSS::from_env();
 let builder = RequestBuilder::new()
     .with_expire(60);
 let file_path = "./hello.txt";
 oss.put_object_from_file("/hello.txt", file_path, &builder).unwrap();
 ```
-## 上传文件(内存)
+## 上传内存文件
 ```rust
 use aliyun_oss_rust_sdk::object::ObjectAPI;
 use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
+
 let oss = OSS::from_env();
 let builder = RequestBuilder::new()
     .with_expire(60);
@@ -115,6 +118,7 @@ oss.pub_object_from_buffer("/hello.txt", buffer.as_slice(), &builder).unwrap();
 use aliyun_oss_rust_sdk::object::ObjectAPI;
 use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
+
 let oss = OSS::from_env();
 let builder = RequestBuilder::new()
    .with_expire(60);
