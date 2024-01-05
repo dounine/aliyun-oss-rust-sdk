@@ -19,7 +19,7 @@ let build = RequestBuilder::new()
     .expire(60) //60秒链接过期
     .oss_download_speed_limit(30);//限速30kb
 let download_url = oss.sign_download_url(
-    "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
+    "/mydir/hello.txt",
    &build
 ); 
 println!("download_url: {}", download_url);
