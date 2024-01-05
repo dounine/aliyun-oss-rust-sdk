@@ -5,7 +5,8 @@ use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use crate::oss::{API, OSS, OSSInfo};
-use crate::request::{RequestBuilder, Seconds};
+use crate::request::{RequestBuilder, RequestType, Seconds};
+use crate::util::read_file;
 
 pub trait ObjectAPI {
     /// 获取对象
@@ -46,6 +47,63 @@ pub trait ObjectAPI {
     /// //file为上传的文件，类型跟with_content_type一致
     /// ```
     fn get_upload_object_policy(&self, build: &PolicyBuilder) -> Result<PolicyResp>;
+
+
+    /// 上传文件(本地文件)
+    /// # 使用例子
+    /// ```rust
+    /// use aliyun_oss_rust_sdk::object::ObjectAPI;
+    /// use aliyun_oss_rust_sdk::oss::OSS;
+    /// use aliyun_oss_rust_sdk::request::RequestBuilder;
+    /// let oss = OSS::from_env();
+    /// let builder = RequestBuilder::new()
+    ///     .with_expire(60);
+    /// let file_path = "./hello.txt";
+    /// oss.put_object_from_file("/hello.txt", file_path, &builder).unwrap();
+    /// ```
+    fn put_object_from_file<S: AsRef<str>>(
+        &self,
+        key: S,
+        file_path: S,
+        build: &RequestBuilder,
+    ) -> Result<()>;
+
+    /// 上传文件(内存)
+    /// # 使用例子
+    /// ```rust
+    /// use aliyun_oss_rust_sdk::object::ObjectAPI;
+    /// use aliyun_oss_rust_sdk::oss::OSS;
+    /// use aliyun_oss_rust_sdk::request::RequestBuilder;
+    /// let oss = OSS::from_env();
+    /// let builder = RequestBuilder::new()
+    ///     .with_expire(60);
+    /// let file_path = "./hello.txt";
+    /// let buffer = std::fs::read(file_path).unwrap();
+    /// oss.pub_object_from_buffer("/hello.txt", buffer.as_slice(), &builder).unwrap();
+    /// ```
+    fn pub_object_from_buffer<S: AsRef<str>>(
+        &self,
+        key: S,
+        buffer: &[u8],
+        build: &RequestBuilder,
+    ) -> Result<()>;
+
+    /// 删除文件
+    /// # 使用例子
+    /// ```rust
+    /// use aliyun_oss_rust_sdk::object::ObjectAPI;
+    /// use aliyun_oss_rust_sdk::oss::OSS;
+    /// use aliyun_oss_rust_sdk::request::RequestBuilder;
+    /// let oss = OSS::from_env();
+    /// let builder = RequestBuilder::new()
+    ///    .with_expire(60);
+    /// oss.delete_object("/hello.txt", &builder).unwrap();
+    /// ```
+    fn delete_object<S: AsRef<str>>(
+        &self,
+        key: S,
+        build: &RequestBuilder,
+    ) -> Result<()>;
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -154,6 +212,69 @@ impl ObjectAPI for OSS {
             success_action_status,
         })
     }
+
+    fn put_object_from_file<S: AsRef<str>>(&self, key: S, file_path: S, build: &RequestBuilder) -> Result<()> {
+        let buffer = read_file(file_path)?;
+        let mut build = build.clone();
+        build.method = RequestType::Put;
+        let key = self.format_key(key);
+        let (url, headers) = self.build_request(key.as_str(), &build)?;
+        debug!("put object from file: {} headers: {:?}", url,headers);
+        let client = reqwest::blocking::Client::new();
+        let response = client.put(url)
+            .headers(headers)
+            .body(buffer)
+            .send()?;
+        return if response.status().is_success() {
+            Ok(())
+        } else {
+            let status = response.status();
+            let result = response.text()?;
+            debug!("get object status: {} error: {}", status,result);
+            Err(anyhow!(format!("get object status: {} error: {}", status,result)))
+        };
+    }
+
+    fn pub_object_from_buffer<S: AsRef<str>>(&self, key: S, buffer: &[u8], build: &RequestBuilder) -> Result<()> {
+        let mut build = build.clone();
+        build.method = RequestType::Put;
+        let key = self.format_key(key);
+        let (url, headers) = self.build_request(key.as_str(), &build)?;
+        debug!("put object from file: {} headers: {:?}", url,headers);
+        let client = reqwest::blocking::Client::new();
+        let response = client.put(url)
+            .headers(headers)
+            .body(buffer.to_owned())
+            .send()?;
+        return if response.status().is_success() {
+            Ok(())
+        } else {
+            let status = response.status();
+            let result = response.text()?;
+            debug!("get object status: {} error: {}", status,result);
+            Err(anyhow!(format!("get object status: {} error: {}", status,result)))
+        };
+    }
+
+    fn delete_object<S: AsRef<str>>(&self, key: S, build: &RequestBuilder) -> Result<()> {
+        let mut build = build.clone();
+        build.method = RequestType::Delete;
+        let key = self.format_key(key);
+        let (url, headers) = self.build_request(key.as_str(), &build)?;
+        debug!("put object from file: {} headers: {:?}", url,headers);
+        let client = reqwest::blocking::Client::new();
+        let response = client.delete(url)
+            .headers(headers)
+            .send()?;
+        return if response.status().is_success() {
+            Ok(())
+        } else {
+            let status = response.status();
+            let result = response.text()?;
+            debug!("get object status: {} error: {}", status,result);
+            Err(anyhow!(format!("get object status: {} error: {}", status,result)))
+        };
+    }
 }
 
 #[cfg(test)]
@@ -185,6 +306,36 @@ mod tests {
         //form-data的参数为OSSAccessKeyId、policy、signature、success_action_status、key、file
         //key为上传的文件名包含路径、例如：upload/mydir/test.txt
         //file为上传的文件，类型跟with_content_type一致
+    }
+
+    #[test]
+    fn test_put_object_from_file() {
+        init_log();
+        let oss = OSS::from_env();
+        let builder = RequestBuilder::new()
+            .with_expire(60);
+        let file_path = "./Cargo.toml";
+        oss.put_object_from_file("/cargo.toml", file_path, &builder).unwrap();
+    }
+
+    #[test]
+    fn test_put_object_from_buffer() {
+        init_log();
+        let oss = OSS::from_env();
+        let builder = RequestBuilder::new()
+            .with_expire(60);
+        let file_path = "./Cargo.toml";
+        let buffer = std::fs::read(file_path).unwrap();
+        oss.pub_object_from_buffer("/cargo.toml", buffer.as_slice(), &builder).unwrap();
+    }
+
+    #[test]
+    fn test_delete_object() {
+        init_log();
+        let oss = OSS::from_env();
+        let builder = RequestBuilder::new()
+            .with_expire(60);
+        oss.delete_object("/cargo.toml", &builder).unwrap();
     }
 
     #[test]

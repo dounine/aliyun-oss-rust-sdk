@@ -56,7 +56,7 @@ impl RequestBuilder {
         self.content_type = Some(content_type.as_ref().to_string());
         self
     }
-    pub fn expire(mut self, expire: Seconds) -> Self {
+    pub fn with_expire(mut self, expire: Seconds) -> Self {
         self.expire = expire;
         self
     }

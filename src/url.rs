@@ -16,7 +16,7 @@ pub trait UrlApi: OSSInfo + API {
     /// let oss = OSS::from_env();//也可以使用OSS::new()方法传递参数
     /// let build = RequestBuilder::new()
     ///    //.with_cdn("https://mydomain.com")
-    ///    .expire(60) //60秒链接过期
+    ///    .with_expire(60) //60秒链接过期
     ///   .oss_download_speed_limit(30);//限速30kb
     /// let download_url = oss.sign_download_url(
     ///     "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
@@ -37,7 +37,7 @@ pub trait UrlApi: OSSInfo + API {
     /// let build = RequestBuilder::new()
     ///    //.with_cdn("https://mydomain.com")
     ///    .with_content_type("text/plain") //设置上传文件的content-type
-    ///    .expire(60); //60秒链接过期
+    ///    .with_expire(60); //60秒链接过期
     /// let upload_url = oss.sign_upload_url(
     ///     "tmp.txt",
     ///     &build
@@ -141,7 +141,7 @@ mod tests {
         let oss = OSS::from_env();
         let build = RequestBuilder::new()
             .with_cdn("https://cdn.ipadump.com")
-            .expire(60)
+            .with_expire(60)
             .oss_download_allow_ip("14.145.28.62", 32);
         // .oss_download_speed_limit(30);
         oss.sign_download_url(
@@ -158,7 +158,7 @@ mod tests {
         let build = RequestBuilder::new()
             .with_cdn("http://cdn.ipadump.com")
             .with_content_type("text/plain")
-            .expire(600);
+            .with_expire(600);
         oss.sign_upload_url(
             "tmp.txt",
             &build,
