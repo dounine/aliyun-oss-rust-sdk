@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use strum_macros::{Display, EnumString};
 
-type Seconds = i64;
+pub type Seconds = i64;
 
 #[derive(EnumString, Display, Clone, Debug)]
 pub enum RequestType {

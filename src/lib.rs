@@ -4,7 +4,8 @@
 //!
 //! # 功能列表：
 //!
-//! 1. 签名下载URL(支持自定义域名)支持限速下载。
+//! ## 1. 签名下载URL
+//! 自定义域名/限速下载/过期时间/自定义content-type
 //! ```rust
 //! use aliyun_oss_rust_sdk::oss::{OSS,RequestBuilder};
 //! use aliyun_oss_rust_sdk::url::UrlApi;
@@ -25,7 +26,9 @@
 //! );
 //! println!("download_url: {}", download_url);
 //! ```
-//! 2. 签名上传URL(支持自定义域名)支持限速上传。
+//! ## 2. 签名上传URL
+//! 允许前端简单上传文件，精确控制请用功能4：获取上传对象的policy方式上传
+//! 自定义域名/限速上传/过期时间/自定义content-type
 //! ```rust
 //! use aliyun_oss_rust_sdk::oss::{OSS, RequestBuilder};
 //! use aliyun_oss_rust_sdk::url::UrlApi;
@@ -42,7 +45,7 @@
 //!  println!("upload_url: {}", upload_url);
 //! //使用postman测试上传即可，PS:要注意content-type要和build中的一致
 //! ```
-//! 3. 文件下载
+//! ## 3. 文件下载
 //! ```rust
 //! use aliyun_oss_rust_sdk::object::ObjectAPI;
 //! use aliyun_oss_rust_sdk::oss::OSS;
@@ -53,17 +56,35 @@
 //! let bytes = oss.get_object("/hello.txt", &build).unwrap();
 //! println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
 //! ```
-//! 4. 上传文件
+//! ## 4. 获取上传对象的policy
+//! 用于前端直传可精确控制上传文件的类型、大小、过期时间、上传目录等
+//! ```rust
+//! use aliyun_oss_rust_sdk::object::{ObjectAPI, PolicyBuilder};
+//! use aliyun_oss_rust_sdk::oss::OSS;
+//! let oss = OSS::from_env();
+//! let policy_builder = PolicyBuilder::new()
+//!             .with_expire(60 * 60)//1个小时过期
+//!             .with_upload_dir("upload/mydir/")//上传目录
+//!             .with_content_type("text/plain")//只允许上传文本.txt
+//!            .with_max_upload_size(100 * 1024 * 1024);//只允许文件上传大小1G以内
+//! let policy = oss.get_upload_object_policy(&policy_builder).unwrap();
+//! println!("policy: {:?}", policy);
+//! //使用postman测试上传
+//! //form-data的参数为OSSAccessKeyId、policy、signature、success_action_status、key、file
+//! //key为上传的文件名包含路径、例如：upload/mydir/test.txt
+//! //file为上传的文件，类型跟with_content_type一致
+//! ```
+//! ## 5. 上传文件
 //!
-//! //todo待做
+//! - [ ] 待做
 //!
-//! 5. 文件删除
+//! ## 5. 文件删除
 //!
-//! //todo待做
+//! - [ ] 待做
 //!
-//! 6. 文件列表
+//! ## 7. 文件列表
 //!
-//! //todo待做
+//! - [ ] 待做
 pub mod oss;
 pub mod object;
 pub mod request;
