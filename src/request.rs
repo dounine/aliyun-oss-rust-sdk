@@ -58,6 +58,10 @@ impl RequestBuilder {
         self.parameters.insert("response-content-disposition".to_string(), format!("attachment;filename={}", file_name.as_ref()));
         self
     }
+    pub fn oss_signature_version2(mut self) -> Self {
+        self.parameters.insert("x-oss-signature-version".to_string(), "OSS2".to_string());
+        self
+    }
     pub fn response_content_encoding<S: AsRef<String>>(mut self, encoding: S) -> Self {
         self.parameters.insert("response-content-encoding".to_string(), encoding.as_ref().to_string());
         self
@@ -81,6 +85,10 @@ impl RequestBuilder {
     }
     pub fn oss_header_put<S: AsRef<str>>(mut self, key: S, value: S) -> Self {
         self.oss_headers.insert(key.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+    pub fn parameters_put<S: AsRef<str>>(mut self, key: S, value: S) -> Self {
+        self.parameters.insert(key.as_ref().to_string(), value.as_ref().to_string());
         self
     }
 }
