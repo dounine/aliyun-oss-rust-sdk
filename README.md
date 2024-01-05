@@ -6,13 +6,13 @@
 ```rust
 use aliyun_oss_rust_sdk::oss::{OSS, OSSAPI, RequestBuilder};
 let oss = OSS::from_env();//也可以使用OSS::new()方法传递参数
-let mut build = RequestBuilder::new()
+let build = RequestBuilder::new()
     //.with_cdn("https://mydomain.com")
     .expire(60) //60秒链接过期
     .oss_download_speed_limit(30);//限速30kb
 let download_url = oss.sign_download_url(
     "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
-   &mut build
+   &build
 ); 
 println!("download_url: {}", download_url);
 ```
@@ -28,7 +28,7 @@ let oss = OSS::new(
     "my_bucket",
     );
 let build = RequestBuilder::new();
-let bytes = oss.get_object("/hello.txt", build).unwrap();
+let bytes = oss.get_object("/hello.txt", &build).unwrap();
 println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
 ```
 3. 上传文件

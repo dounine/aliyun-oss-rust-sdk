@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 use base64::Engine;
 use base64::engine::general_purpose;
 use hmac::{Hmac, Mac};
 use reqwest::header::DATE;
 use tracing::debug;
 use crate::oss::{API, OSS, OSSInfo};
-use crate::request::{RequestBuilder, RequestType};
+use crate::request::{RequestBuilder};
 
 pub trait AuthAPI {
     fn sign<S: AsRef<str>>(

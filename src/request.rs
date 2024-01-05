@@ -3,7 +3,7 @@ use strum_macros::{Display, EnumString};
 
 type Seconds = i64;
 
-#[derive(EnumString, Display, Clone)]
+#[derive(EnumString, Display, Clone, Debug)]
 pub enum RequestType {
     #[strum(serialize = "GET")]
     Get,
@@ -17,7 +17,7 @@ pub enum RequestType {
     Head,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RequestBuilder {
     pub cdn: Option<String>,
     pub method: RequestType,
@@ -42,7 +42,7 @@ impl RequestBuilder {
             oss_headers: HashMap::new(),
         }
     }
-    pub fn with_cdn<S:AsRef<str>>(mut self, cdn: S) -> Self {
+    pub fn with_cdn<S: AsRef<str>>(mut self, cdn: S) -> Self {
         self.cdn = Some(cdn.as_ref().to_string());
         self
     }

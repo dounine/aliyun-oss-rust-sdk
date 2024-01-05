@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 use reqwest::header::{AUTHORIZATION, DATE, HeaderMap};
-use strum_macros::Display;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 
 use tracing::debug;
 
 use crate::auth::AuthAPI;
-use crate::request::{RequestBuilder, RequestType};
+use crate::request::{RequestBuilder};
 
 /// OSS配置
 pub struct OSS {
@@ -25,7 +24,7 @@ pub trait OSSInfo {
 }
 
 pub trait API {
-    fn sign_url<S: AsRef<str>>(&self, key: S, build: &mut RequestBuilder) -> String;
+    fn sign_url<S: AsRef<str>>(&self, key: S, build: &RequestBuilder) -> String;
     fn key_urlencode<S: AsRef<str>>(&self, key: S) -> String {
         key
             .as_ref()
@@ -65,7 +64,7 @@ pub trait OSSAPI: OSSInfo + API {
     ///     );
     ///  println!("download_url: {}", download_url);
     /// ```
-    fn sign_download_url(&self, key: &str, build: &mut RequestBuilder) -> String {
+    fn sign_download_url(&self, key: &str, build: &RequestBuilder) -> String {
         let sign = self.sign_url(key, build);
         if let Some(cdn) = &build.cdn {
             let download_url = format!("{}{}", cdn, sign);
@@ -99,7 +98,8 @@ impl OSSInfo for OSS {
 }
 
 impl API for OSS {
-    fn sign_url<S: AsRef<str>>(&self, key: S, build: &mut RequestBuilder) -> String {
+    fn sign_url<S: AsRef<str>>(&self, key: S, build: &RequestBuilder) -> String {
+        let mut build = build.clone();
         let key = self.format_key(key);
         let expiration = chrono::Local::now() + chrono::Duration::seconds(build.expire);
         build.headers.insert(DATE.to_string(), expiration.timestamp().to_string());
@@ -158,31 +158,40 @@ impl<'a> OSS {
         let bucket = dotenvy::var("OSS_BUCKET").expect("OSS_BUCKET not found");
         OSS::new(key_id, key_secret, endpoint, bucket)
     }
-    pub fn format_host<S: AsRef<str>>(&self, bucket: S, key: S) -> String {
+    pub fn format_host<S: AsRef<str>>(&self, bucket: S, key: S, build: &RequestBuilder) -> String {
         let key = if key.as_ref().starts_with("/") {
             key.as_ref().to_string()
         } else {
             format!("/{}", key.as_ref())
         };
-        if self.endpoint().starts_with("https") {
+        if let Some(cdn) = &build.cdn {
             format!(
-                "https://{}.{}{}",
-                bucket.as_ref(),
-                self.endpoint().replacen("https://", "", 1),
+                "{}{}",
+                cdn,
                 key,
             )
         } else {
-            format!(
-                "http://{}.{}{}",
-                bucket.as_ref(),
-                self.endpoint().replacen("http://", "", 1),
-                key,
-            )
+            if self.endpoint().starts_with("https") {
+                format!(
+                    "https://{}.{}{}",
+                    bucket.as_ref(),
+                    self.endpoint().replacen("https://", "", 1),
+                    key,
+                )
+            } else {
+                format!(
+                    "http://{}.{}{}",
+                    bucket.as_ref(),
+                    self.endpoint().replacen("http://", "", 1),
+                    key,
+                )
+            }
         }
     }
 
-    pub fn build_request<S: AsRef<str>>(&self, key: S, mut build: RequestBuilder) -> Result<(String, HeaderMap)> {
-        let host = self.format_host(self.bucket(), key.as_ref().to_string());
+    pub fn build_request<S: AsRef<str>>(&self, key: S, build: &RequestBuilder) -> Result<(String, HeaderMap)> {
+        let mut build = build.clone();
+        let host = self.format_host(self.bucket(), key.as_ref().to_string(), &build);
         let mut header = HeaderMap::new();
         let date = self.date();
         header.insert(DATE, date.parse()?);
@@ -201,32 +210,9 @@ impl<'a> OSS {
     }
 }
 
-// use thiserror::Error;
-//
-// #[derive(Error, Debug, Display)]
-// pub enum FileError {
-//     IoError(#[from] std::io::Error),
-// }
-//
-// #[derive(Error, Debug, Display)]
-// pub enum MyError {
-//     IoError(#[from] FileError)
-// }
-
-
-// impl From<std::io::Error> for MyError {
-//     fn from(err: std::io::Error) -> Self {
-//         MyError::IoError(FileError::IoError(err))
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use std::io::Read;
-    use chrono::{DateTime, Utc};
-    use strum_macros::Display;
-    use crate::object::ObjectAPI;
-
     use super::*;
 
     #[inline]
@@ -266,13 +252,13 @@ mod tests {
         println!("{}", date());
         init_log();
         let oss = OSS::from_env();
-        let mut build = RequestBuilder::new()
+        let build = RequestBuilder::new()
             .with_cdn("http://cdn.ipadump.com")
             .expire(60)
             .oss_download_speed_limit(30);
         oss.sign_download_url(
             "/ipas/cn/-10/ipadump.com_imem内存修改器_1.0.0.ipa",
-            &mut build,
+            &build,
         );
     }
 }

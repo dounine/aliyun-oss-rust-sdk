@@ -15,13 +15,13 @@
 //!             "oss-cn-shanghai.aliyuncs.com",
 //!             "my_bucket",
 //!             );
-//! let mut build = RequestBuilder::new()
+//! let build = RequestBuilder::new()
 //!     .expire(60)
 //!     //.with_cdn("https://mydomain.com")
 //!     .oss_download_speed_limit(30);
 //! let download_url = oss.sign_download_url(
 //!     "/ipas/cn/-10/imem内存修改器_1.0.0.ipa",
-//!     &mut build,
+//!     &build,
 //! );
 //! println!("download_url: {}", download_url);
 //! ```
@@ -38,7 +38,7 @@
 //!     "my_bucket",
 //!     );
 //! let build = RequestBuilder::new();
-//! let bytes = oss.get_object("/hello.txt", build).unwrap();
+//! let bytes = oss.get_object("/hello.txt", &build).unwrap();
 //! println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
 //! ```
 //! 3. 上传文件
