@@ -6,8 +6,8 @@
 //!
 //! 1. 签名URL(支持自定义域名)支持限速下载。
 //! ```rust
-//! use aliyun_oss_rust_sdk::oss::{OSS, OSSAPI};
-//! use aliyun_oss_rust_sdk::request::RequestBuilder;
+//! use aliyun_oss_rust_sdk::oss::{OSS,RequestBuilder};
+//! use aliyun_oss_rust_sdk::url::UrlApi;
 //!
 //! let oss = OSS::new(
 //!             "my_key_id",
@@ -56,3 +56,4 @@ pub mod oss;
 pub mod object;
 pub mod request;
 pub mod auth;
+pub mod url;
