@@ -1,6 +1,6 @@
 [package]
 name = "aliyun-oss-rust-sdk"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 authors = ["lake"]
 description = "阿里云OSS Rust SDK"
