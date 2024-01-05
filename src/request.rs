@@ -46,6 +46,10 @@ impl RequestBuilder {
         self.cdn = Some(cdn.as_ref().to_string());
         self
     }
+    pub fn with_content_type<S: AsRef<str>>(mut self, content_type: S) -> Self {
+        self.content_type = Some(content_type.as_ref().to_string());
+        self
+    }
     pub fn expire(mut self, expire: Seconds) -> Self {
         self.expire = expire;
         self
@@ -65,7 +69,7 @@ impl RequestBuilder {
         self
     }
     pub fn oss_download_allow_ip<IP, S>(mut self, ip: IP, mask: S) -> Self
-        where IP: AsRef<str>, S: Into<i32>
+        where IP: AsRef<str>, S: Into<u8>
     {
         self.parameters.insert("x-oss-ac-source-ip".to_string(), ip.as_ref().to_string());
         self.parameters.insert("x-oss-ac-subnet-mask".to_string(), mask.into().to_string());

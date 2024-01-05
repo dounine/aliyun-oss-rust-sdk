@@ -38,22 +38,26 @@ impl<'a> AuthAPI for OSS {
 
         oss_headers.sort_by(|a, b| a.0.cmp(&b.0));
 
-        let oss_header_str = oss_headers
+        let mut canonicalized_oss_headers = oss_headers
             .iter()
             .map(|(k, v)| format!("{}:{}", k, v))
             .collect::<Vec<_>>()
             .join("\n");
 
-        let mut oss_resource_str = self.format_oss_resource_str(self.bucket().as_str(), key.as_ref());
+        if oss_headers.len() == 1 {
+            canonicalized_oss_headers = format!("{}\n", canonicalized_oss_headers);
+        }
+
+        let mut canonicalized_resource = self.format_oss_resource_str(self.bucket().as_str(), key.as_ref());
         if build.parameters.len() > 0 {
             let mut params = build
                 .parameters
                 .iter()
                 .collect::<Vec<_>>();
             params.sort_by(|a, b| a.0.cmp(&b.0));
-            oss_resource_str = format!(
+            canonicalized_resource = format!(
                 "{}?{}",
-                oss_resource_str,
+                canonicalized_resource,
                 params
                     .into_iter()
                     .map(|(k, v)| format!("{}={}", k, v))
@@ -61,14 +65,17 @@ impl<'a> AuthAPI for OSS {
                     .join("&")
             );
         }
+        let verb = build.method.to_string();
+        let content_md5 = build.content_md5.clone().unwrap_or_default();
+        let content_type = build.content_type.clone().unwrap_or_default();
         let sign_str = format!(
             "{}\n{}\n{}\n{}\n{}{}",
-            build.method,
-            build.content_md5.clone().unwrap_or_default(),
-            build.content_type.clone().unwrap_or_default(),
+            verb,
+            content_md5,
+            content_type,
             date,
-            oss_header_str,
-            oss_resource_str,
+            canonicalized_oss_headers,
+            canonicalized_resource,
         );
         debug!("sign_str: {}", sign_str);
         let mut hasher: Hmac<sha1::Sha1> = Hmac::new_from_slice(self.key_secret().as_bytes()).unwrap();
