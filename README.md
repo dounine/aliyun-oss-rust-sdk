@@ -1,5 +1,5 @@
 # aliyun-oss-rust-sdk
-阿里云rust oss sdk
+> 阿里云 © Alibaba Cloud Official Oss SDK(标准库)
 
 ## 文件下载
 ```rust

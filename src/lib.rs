@@ -1,6 +1,6 @@
-//! # 阿里云OSS SDK
+//! # aliyun-oss-rust-sdk
 //!
-//! 本项目是阿里云OSS的Rust SDK，基于HTTP API实现。
+//! 阿里云 © Alibaba Cloud Official Oss SDK(标准库)
 //!
 //! ## 文件下载
 //! ```rust
