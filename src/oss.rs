@@ -5,6 +5,7 @@ use crate::auth::AuthAPI;
 use crate::request::{RequestBuilder};
 
 /// OSS配置
+#[derive(Debug, Clone)]
 pub struct OSS {
     key_id: String,
     key_secret: String,

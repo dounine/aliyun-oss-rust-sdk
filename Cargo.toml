@@ -1,6 +1,6 @@
 [package]
 name = "aliyun-oss-rust-sdk"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["aliyun","lake"]
 description = "阿里云 © Alibaba Cloud Official Oss SDK(标准库)"
