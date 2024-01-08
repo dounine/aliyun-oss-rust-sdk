@@ -3,7 +3,7 @@ use strum_macros::{Display, EnumString};
 
 pub type Seconds = i64;
 
-#[derive(EnumString, Display, Clone, Debug)]
+#[derive(EnumString, Display, PartialEq, Eq, Clone, Debug)]
 pub enum RequestType {
     #[strum(serialize = "GET")]
     Get,
@@ -16,6 +16,9 @@ pub enum RequestType {
     #[strum(serialize = "HEAD")]
     Head,
 }
+
+unsafe impl Send for RequestType {}
+unsafe impl Sync for RequestType {}
 
 #[derive(Clone, Debug)]
 pub struct RequestBuilder {
@@ -30,9 +33,19 @@ pub struct RequestBuilder {
     pub oss_headers: HashMap<String, String>,
 }
 
+impl Default for RequestBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+unsafe impl Send for RequestBuilder {}
+
+unsafe impl Sync for RequestBuilder {}
+
 impl RequestBuilder {
     pub fn new() -> Self {
-        RequestBuilder {
+        Self {
             cdn: None,
             https: true,
             method: RequestType::Get,

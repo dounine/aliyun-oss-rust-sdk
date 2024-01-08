@@ -106,7 +106,7 @@ pub trait ObjectAPI {
     ) -> Result<()>;
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyResp {
     access_id: String,
     host: String,
@@ -115,16 +115,28 @@ pub struct PolicyResp {
     success_action_status: u8,
 }
 
+unsafe impl Send for PolicyResp {}
+unsafe impl Sync for PolicyResp {}
+
 /// Policy构建器
 /// # 使用例子
 /// ```rust
 ///
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PolicyBuilder {
     expire: Seconds,
     upload_dir: String,
     content_type: String,
     max_upload_size: i64,
+}
+
+unsafe impl Send for PolicyBuilder {}
+unsafe impl Sync for PolicyBuilder {}
+
+impl Default for PolicyBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PolicyBuilder {

@@ -12,6 +12,8 @@ pub struct OSS {
     endpoint: String,
     bucket: String,
 }
+unsafe impl Send for OSS {}
+unsafe impl Sync for OSS {}
 
 pub trait OSSInfo {
     fn endpoint(&self) -> String;
