@@ -1,8 +1,13 @@
 use base64::Engine;
 use base64::engine::general_purpose;
+use cfg_if::cfg_if;
 use hmac::{Hmac, Mac};
 use reqwest::header::DATE;
-use tracing::debug;
+cfg_if! {
+   if #[cfg(feature= "debug-print")] {
+        use tracing::debug;
+    }
+}
 use crate::oss::{API, OSS, OSSInfo};
 use crate::request::{RequestBuilder};
 
@@ -77,7 +82,11 @@ impl<'a> AuthAPI for OSS {
             canonicalized_oss_headers,
             canonicalized_resource,
         );
-        debug!("sign_str: {}", sign_str);
+        cfg_if! {
+           if #[cfg(feature= "debug-print")] {
+                debug!("oss logsign_str: {}", sign_str);
+            }
+        }
         let mut hasher: Hmac<sha1::Sha1> = Hmac::new_from_slice(self.key_secret().as_bytes()).unwrap();
         hasher.update(sign_str.as_bytes());
 

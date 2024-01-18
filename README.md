@@ -17,13 +17,12 @@
 
 ## 文件下载
 ```rust
-use aliyun_oss_rust_sdk::object::ObjectAPI;
 use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
 
 let oss = OSS::from_env();
 let build = RequestBuilder::new();
-let bytes = oss.get_object("/hello.txt", &build).unwrap();
+let bytes = oss.get_object("/hello.txt", build).unwrap();
 println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
 ```
 
@@ -73,7 +72,7 @@ let upload_url = oss.sign_upload_url(
 ## 获取上传对象的policy
 用于前端直传可精确控制上传文件的类型、大小、过期时间、上传目录等
 ```rust
-use aliyun_oss_rust_sdk::object::{ObjectAPI, PolicyBuilder};
+use aliyun_oss_rust_sdk::entity::PolicyBuilder;
 use aliyun_oss_rust_sdk::oss::OSS;
 
 let oss = OSS::from_env();
@@ -82,7 +81,7 @@ let policy_builder = PolicyBuilder::new()
             .with_upload_dir("upload/mydir/")//上传目录
             .with_content_type("text/plain")//只允许上传文本.txt
            .with_max_upload_size(100 * 1024 * 1024);//只允许文件上传大小1G以内
-let policy = oss.get_upload_object_policy(&policy_builder).unwrap();
+let policy = oss.get_upload_object_policy(policy_builder).unwrap();
 println!("policy: {:?}", policy);
 //使用postman测试上传
 //form-data的参数为OSSAccessKeyId、policy、signature、success_action_status、key、file
@@ -92,7 +91,6 @@ println!("policy: {:?}", policy);
 
 ## 上传本地文件
 ```rust
-use aliyun_oss_rust_sdk::object::ObjectAPI;
 use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
 
@@ -100,11 +98,10 @@ let oss = OSS::from_env();
 let builder = RequestBuilder::new()
     .with_expire(60);
 let file_path = "./hello.txt";
-oss.put_object_from_file("/hello.txt", file_path, &builder).unwrap();
+oss.put_object_from_file("/hello.txt", file_path, builder).unwrap();
 ```
 ## 上传内存文件
 ```rust
-use aliyun_oss_rust_sdk::object::ObjectAPI;
 use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
 
@@ -113,16 +110,15 @@ let builder = RequestBuilder::new()
     .with_expire(60);
 let file_path = "./hello.txt";
 let buffer = std::fs::read(file_path).unwrap();
-oss.pub_object_from_buffer("/hello.txt", buffer.as_slice(), &builder).unwrap();
+oss.pub_object_from_buffer("/hello.txt", buffer.as_slice(), builder).unwrap();
 ```
 ## 文件删除
 ```rust
-use aliyun_oss_rust_sdk::object::ObjectAPI;
 use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
 
 let oss = OSS::from_env();
 let builder = RequestBuilder::new()
    .with_expire(60);
-oss.delete_object("/hello.txt", &builder).unwrap();
+oss.delete_object("/hello.txt", builder).unwrap();
 ```

@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 use reqwest::header::DATE;
-use tracing::debug;
+use cfg_if::cfg_if;
+cfg_if! {
+   if #[cfg(feature= "debug-print")] {
+        use tracing::debug;
+    }
+}
 use crate::auth::AuthAPI;
 use crate::oss::{API, OSS, OSSInfo};
 use crate::request::{RequestBuilder, RequestType};
@@ -54,7 +59,11 @@ impl UrlApi for OSS {
         let sign = self.sign_url(key.as_ref(), build);
         if let Some(cdn) = &build.cdn {
             let download_url = format!("{}{}", cdn, sign);
-            debug!("download_url: {}", download_url);
+            cfg_if! {
+               if #[cfg(feature= "debug-print")] {
+                    debug!("download_url: {}", download_url);
+                }
+            }
             download_url
         } else {
             let schema = if build.https {
@@ -63,7 +72,11 @@ impl UrlApi for OSS {
                 "http://"
             };
             let download_url = format!("{}{}.{}{}", schema, self.bucket(), self.endpoint(), sign);
-            debug!("download_url: {}", download_url);
+            cfg_if! {
+               if #[cfg(feature= "debug-print")] {
+                    debug!("download_url: {}", download_url);
+                }
+            }
             download_url
         }
     }
@@ -74,7 +87,11 @@ impl UrlApi for OSS {
         let sign = self.sign_url(key.as_ref(), &build);
         if let Some(cdn) = &build.cdn {
             let download_url = format!("{}{}", cdn, sign);
-            debug!("upload_url: {}", download_url);
+            cfg_if! {
+               if #[cfg(feature= "debug-print")] {
+                    debug!("upload_url: {}", download_url);
+                }
+            }
             download_url
         } else {
             let schema = if build.https {
@@ -83,7 +100,11 @@ impl UrlApi for OSS {
                 "http://"
             };
             let download_url = format!("{}{}.{}{}", schema, self.bucket(), self.endpoint(), sign);
-            debug!("upload_url: {}", download_url);
+            cfg_if! {
+               if #[cfg(feature= "debug-print")] {
+                    debug!("upload_url: {}", download_url);
+                }
+            }
             download_url
         }
     }
@@ -97,7 +118,11 @@ impl UrlApi for OSS {
             key.as_str(),
             &build,
         );
-        debug!("signature: {}", signature);
+        cfg_if! {
+               if #[cfg(feature= "debug-print")] {
+                    debug!("signature: {}", signature);
+                }
+        }
         let mut query_parameters = HashMap::new();
         query_parameters.insert("Expires".to_string(), expiration.timestamp().to_string());
         query_parameters.insert("OSSAccessKeyId".to_string(), self.key_id().to_string());
@@ -129,10 +154,14 @@ mod tests {
 
     #[inline]
     fn init_log() {
-        tracing_subscriber::fmt()
-            .with_max_level(tracing::Level::DEBUG)
-            .with_line_number(true)
-            .init();
+        cfg_if! {
+               if #[cfg(feature= "debug-print")] {
+                    tracing_subscriber::fmt()
+                        .with_max_level(tracing::Level::DEBUG)
+                        .with_line_number(true)
+                        .init();
+                }
+            }
     }
 
     #[test]

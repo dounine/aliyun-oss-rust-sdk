@@ -1,20 +1,27 @@
 use std::collections::HashMap;
-use strum_macros::{Display, EnumString};
+use std::fmt::{Display, Formatter};
 
 pub type Seconds = i64;
 
-#[derive(EnumString, Display, PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum RequestType {
-    #[strum(serialize = "GET")]
     Get,
-    #[strum(serialize = "PUT")]
     Put,
-    #[strum(serialize = "POST")]
     Post,
-    #[strum(serialize = "DELETE")]
     Delete,
-    #[strum(serialize = "HEAD")]
     Head,
+}
+
+impl Display for RequestType{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RequestType::Get => write!(f, "GET"),
+            RequestType::Put => write!(f, "PUT"),
+            RequestType::Post => write!(f, "POST"),
+            RequestType::Delete => write!(f, "DELETE"),
+            RequestType::Head => write!(f, "HEAD"),
+        }
+    }
 }
 
 unsafe impl Send for RequestType {}

@@ -1,5 +1,5 @@
-use reqwest::header::{AUTHORIZATION, DATE, HeaderMap};
-use anyhow::Result;
+use cfg_if::cfg_if;
+use reqwest::header::{AUTHORIZATION, DATE, HeaderMap, InvalidHeaderValue};
 use chrono::{DateTime, Utc};
 use crate::auth::AuthAPI;
 use crate::request::{RequestBuilder};
@@ -12,7 +12,9 @@ pub struct OSS {
     endpoint: String,
     bucket: String,
 }
+
 unsafe impl Send for OSS {}
+
 unsafe impl Sync for OSS {}
 
 pub trait OSSInfo {
@@ -73,6 +75,24 @@ impl API for OSS {
 }
 
 impl<'a> OSS {
+    pub fn from_env() -> Self {
+        let key_id = std::env::var("OSS_KEY_ID").expect("OSS_KEY_ID not found");
+        let key_secret = std::env::var("OSS_KEY_SECRET").expect("OSS_KEY_SECRET not found");
+        let endpoint = std::env::var("OSS_ENDPOINT").expect("OSS_ENDPOINT not found");
+        let bucket = std::env::var("OSS_BUCKET").expect("OSS_BUCKET not found");
+        OSS::new(key_id, key_secret, endpoint, bucket)
+    }
+    pub fn open_debug(&self) {
+        cfg_if! {
+            if #[cfg(feature = "debug-print")] {
+                std::env::set_var("RUST_LOG", "oss=debug");
+                tracing_subscriber::fmt()
+                    .with_max_level(tracing::Level::DEBUG)
+                    .with_line_number(true)
+                    .init();
+            }
+        }
+    }
     pub fn new<S: Into<String>>(key_id: S, key_secret: S, endpoint: S, bucket: S) -> Self {
         OSS {
             key_id: key_id.into(),
@@ -82,14 +102,6 @@ impl<'a> OSS {
         }
     }
 
-    pub fn from_env() -> Self {
-        dotenvy::dotenv().ok();
-        let key_id = dotenvy::var("OSS_KEY_ID").expect("OSS_KEY_ID not found");
-        let key_secret = dotenvy::var("OSS_KEY_SECRET").expect("OSS_KEY_SECRET not found");
-        let endpoint = dotenvy::var("OSS_ENDPOINT").expect("OSS_ENDPOINT not found");
-        let bucket = dotenvy::var("OSS_BUCKET").expect("OSS_BUCKET not found");
-        OSS::new(key_id, key_secret, endpoint, bucket)
-    }
     pub fn format_host<S: AsRef<str>>(&self, bucket: S, key: S, build: &RequestBuilder) -> String {
         let key = if key.as_ref().starts_with("/") {
             key.as_ref().to_string()
@@ -121,7 +133,7 @@ impl<'a> OSS {
         }
     }
 
-    pub fn build_request<S: AsRef<str>>(&self, key: S, build: &RequestBuilder) -> Result<(String, HeaderMap)> {
+    pub fn build_request<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<(String, HeaderMap), InvalidHeaderValue> {
         let mut build = build.clone();
         let host = self.format_host(self.bucket(), key.as_ref().to_string(), &build);
         let mut header = HeaderMap::new();
@@ -145,8 +157,9 @@ impl<'a> OSS {
 #[cfg(test)]
 mod tests {
     use std::io::Read;
+    use crate::error::OssError;
 
-    fn open_file(file_name: &str) -> anyhow::Result<String, anyhow::Error> {
+    fn open_file(file_name: &str) -> Result<String, OssError> {
         let mut file = std::fs::File::open(file_name)?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
