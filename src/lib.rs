@@ -16,6 +16,19 @@
 6. [上传内存文件](#上传内存文件)
 7. [文件删除](#文件删除)
 
+添加依赖
+```toml
+[dependencies]
+# 同步
+aliyun-oss-rust-sdk = { version = "0.1.6", features = ["blocking"] }
+
+# 异步
+aliyun-oss-rust-sdk = { version = "0.1.6", features = ["async"] }
+
+# debug日志开启
+aliyun-oss-rust-sdk = { version = "0.1.6", features = ["blocking","debug-print"] }
+```
+
 ## 文件下载
 ```rust
 use aliyun_oss_rust_sdk::oss::OSS;
@@ -124,9 +137,9 @@ let builder = RequestBuilder::new()
 oss.delete_object("/hello.txt", builder).unwrap();
 ```
 */
+pub mod auth;
 pub mod oss;
 pub mod request;
-pub mod auth;
 pub mod url;
 mod util;
 
