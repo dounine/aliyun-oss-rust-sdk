@@ -1,4 +1,3 @@
-use cfg_if::cfg_if;
 use reqwest::header::{AUTHORIZATION, DATE, HeaderMap, InvalidHeaderValue};
 use chrono::{DateTime, Utc};
 use crate::auth::AuthAPI;
@@ -82,17 +81,17 @@ impl<'a> OSS {
         let bucket = std::env::var("OSS_BUCKET").expect("OSS_BUCKET not found");
         OSS::new(key_id, key_secret, endpoint, bucket)
     }
+
+    #[cfg(feature = "debug-print")]
     pub fn open_debug(&self) {
-        cfg_if! {
-            if #[cfg(feature = "debug-print")] {
-                std::env::set_var("RUST_LOG", "oss=debug");
-                tracing_subscriber::fmt()
-                    .with_max_level(tracing::Level::DEBUG)
-                    .with_line_number(true)
-                    .init();
-            }
-        }
+        std::env::set_var("RUST_LOG", "oss=debug");
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_line_number(true)
+            .init();
     }
+    #[cfg(not(feature = "debug-print"))]
+    pub fn open_debug(&self) {}
     pub fn new<S: Into<String>>(key_id: S, key_secret: S, endpoint: S, bucket: S) -> Self {
         OSS {
             key_id: key_id.into(),

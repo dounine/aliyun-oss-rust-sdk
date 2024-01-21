@@ -123,21 +123,16 @@ impl UrlApi for OSS {
 
 #[cfg(test)]
 mod tests {
-    use cfg_if::cfg_if;
     use crate::oss::OSS;
     use crate::request::RequestBuilder;
     use crate::url::UrlApi;
 
     #[inline]
     fn init_log() {
-        cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    tracing_subscriber::fmt()
-                        .with_max_level(tracing::Level::DEBUG)
-                        .with_line_number(true)
-                        .init();
-                }
-            }
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_line_number(true)
+            .init();
     }
 
     #[test]
