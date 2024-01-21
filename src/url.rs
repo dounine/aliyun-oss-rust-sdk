@@ -1,12 +1,7 @@
 use std::collections::HashMap;
 use reqwest::header::DATE;
-use cfg_if::cfg_if;
-cfg_if! {
-   if #[cfg(feature= "debug-print")] {
-        use tracing::debug;
-    }
-}
 use crate::auth::AuthAPI;
+use crate::debug;
 use crate::oss::{API, OSS, OSSInfo};
 use crate::request::{RequestBuilder, RequestType};
 
@@ -59,11 +54,7 @@ impl UrlApi for OSS {
         let sign = self.sign_url(key.as_ref(), build);
         if let Some(cdn) = &build.cdn {
             let download_url = format!("{}{}", cdn, sign);
-            cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("download_url: {}", download_url);
-                }
-            }
+            debug!("download_url: {}", download_url);
             download_url
         } else {
             let schema = if build.https {
@@ -72,11 +63,7 @@ impl UrlApi for OSS {
                 "http://"
             };
             let download_url = format!("{}{}.{}{}", schema, self.bucket(), self.endpoint(), sign);
-            cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("download_url: {}", download_url);
-                }
-            }
+            debug!("download_url: {}", download_url);
             download_url
         }
     }
@@ -87,11 +74,7 @@ impl UrlApi for OSS {
         let sign = self.sign_url(key.as_ref(), &build);
         if let Some(cdn) = &build.cdn {
             let download_url = format!("{}{}", cdn, sign);
-            cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("upload_url: {}", download_url);
-                }
-            }
+            debug!("upload_url: {}", download_url);
             download_url
         } else {
             let schema = if build.https {
@@ -100,11 +83,7 @@ impl UrlApi for OSS {
                 "http://"
             };
             let download_url = format!("{}{}.{}{}", schema, self.bucket(), self.endpoint(), sign);
-            cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("upload_url: {}", download_url);
-                }
-            }
+            debug!("upload_url: {}", download_url);
             download_url
         }
     }
@@ -118,11 +97,7 @@ impl UrlApi for OSS {
             key.as_str(),
             &build,
         );
-        cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("signature: {}", signature);
-                }
-        }
+        debug!("signature: {}", signature);
         let mut query_parameters = HashMap::new();
         query_parameters.insert("Expires".to_string(), expiration.timestamp().to_string());
         query_parameters.insert("OSSAccessKeyId".to_string(), self.key_id().to_string());
@@ -148,6 +123,7 @@ impl UrlApi for OSS {
 
 #[cfg(test)]
 mod tests {
+    use cfg_if::cfg_if;
     use crate::oss::OSS;
     use crate::request::RequestBuilder;
     use crate::url::UrlApi;

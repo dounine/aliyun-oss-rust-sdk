@@ -1,19 +1,13 @@
 use base64::engine::general_purpose;
 use base64::Engine;
-use cfg_if::cfg_if;
 use hmac::Hmac;
 use reqwest::StatusCode;
 use sha1::digest::Mac;
-cfg_if! {
-   if #[cfg(feature= "debug-print")] {
-        use tracing::debug;
-    }
-}
 use crate::entity::{PolicyBuilder, PolicyResp};
 use crate::error::OssError;
 use crate::oss::{OSSInfo, API, OSS};
 use crate::request::{RequestBuilder, RequestType};
-use crate::util;
+use crate::{debug, util};
 use crate::util::read_file;
 
 impl OSS {
@@ -38,11 +32,7 @@ impl OSS {
         let (url, headers) = self
             .build_request(key.as_str(), build)
             .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
-        cfg_if! {
-           if #[cfg(feature= "debug-print")] {
-                debug!("oss logget object url: {} headers: {:?}", url,headers);
-            }
-        }
+        debug!("oss logget object url: {} headers: {:?}", url,headers);
         let client = reqwest::Client::new();
         let response = client.get(url).headers(headers).send().await?;
         return if response.status().is_success() {
@@ -51,11 +41,7 @@ impl OSS {
         } else {
             let status = response.status();
             let result = response.text().await?;
-            cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("oss log: get object status: {} error: {}", status,result);
-                }
-            }
+            debug!("oss log: get object status: {} error: {}", status,result);
             Err(OssError::Err(format!(
                 "get object status: {} error: {}",
                 status, result
@@ -96,27 +82,23 @@ impl OSS {
             ]
         }
         "#
-        .to_string();
+            .to_string();
         let success_action_status = 200;
         json_data = json_data.replacen("{time}", &date_str, 1);
         json_data = json_data.replacen("{bucket}", &self.bucket(), 1);
         //limit 1GB bytes
         json_data = json_data.replacen("{size}", &build.max_upload_size.to_string(), 1); //允许上传的最大文件大小
-                                                                                         //success status
+        //success status
         json_data = json_data.replacen(
             "{success_action_status}",
             success_action_status.to_string().as_str(),
             1,
         );
         json_data = json_data.replacen("{prefix}", &build.upload_dir, 1); //只允许上传到哪个目录上
-                                                                          //text file
+        //text file
         json_data = json_data.replacen("{content_type}", &build.content_type, 1);
         //只允许上传哪个类型文件
-        cfg_if! {
-           if #[cfg(feature= "debug-print")] {
-                debug!("oss log: policy json: {}", json_data);
-            }
-        }
+        debug!("oss log: policy json: {}", json_data);
         let base64_policy = util::base64_encode(json_data.as_bytes());
         let mut hasher: Hmac<sha1::Sha1> = Hmac::new_from_slice(self.key_secret().as_bytes())
             .map_err(|_| OssError::Err("Hmac new from slice error".to_string()))?;
@@ -155,11 +137,7 @@ impl OSS {
         let (url, headers) = self
             .build_request(key.as_str(), build)
             .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
-        cfg_if! {
-           if #[cfg(feature= "debug-print")] {
-                debug!("oss log: put object from file: {} headers: {:?}", url,headers);
-            }
-        }
+        debug!("oss log: put object from file: {} headers: {:?}", url,headers);
         let client = reqwest::Client::new();
         let response = client.put(url).headers(headers).body(buffer).send().await?;
         return if response.status().is_success() {
@@ -167,11 +145,7 @@ impl OSS {
         } else {
             let status = response.status();
             let result = response.text().await?;
-            cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("oss log: get object status: {} error: {}", status,result);
-                }
-            }
+            debug!("oss log: get object status: {} error: {}", status,result);
             Err(OssError::Err(format!(
                 "get object status: {} error: {}",
                 status, result
@@ -203,11 +177,7 @@ impl OSS {
         let (url, headers) = self
             .build_request(key.as_str(), build)
             .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
-        cfg_if! {
-           if #[cfg(feature= "debug-print")] {
-                debug!("oss log: put object from file: {} headers: {:?}", url,headers);
-            }
-        }
+        debug!("oss log: put object from file: {} headers: {:?}", url,headers);
         let client = reqwest::Client::new();
         let response = client
             .put(url)
@@ -220,11 +190,7 @@ impl OSS {
         } else {
             let status = response.status();
             let result = response.text().await?;
-            cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("oss log: get object status: {} error: {}", status,result);
-                }
-            }
+            debug!("oss log: get object status: {} error: {}", status,result);
             Err(OssError::Err(format!(
                 "get object status: {} error: {}",
                 status, result
@@ -253,11 +219,7 @@ impl OSS {
         let (url, headers) = self
             .build_request(key.as_str(), build)
             .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
-        cfg_if! {
-           if #[cfg(feature= "debug-print")] {
-                debug!("oss log: put object from file: {} headers: {:?}", url,headers);
-            }
-        }
+        debug!("oss log: put object from file: {} headers: {:?}", url,headers);
         let client = reqwest::Client::new();
         let response = client.delete(url).headers(headers).send().await?;
         return if response.status().is_success() {
@@ -265,11 +227,7 @@ impl OSS {
         } else {
             let status = response.status();
             let result = response.text().await?;
-            cfg_if! {
-               if #[cfg(feature= "debug-print")] {
-                    debug!("oss log: get object status: {} error: {}", status,result);
-                }
-            }
+            debug!("oss log: get object status: {} error: {}", status,result);
             Err(OssError::Err(format!(
                 "get object status: {} error: {}",
                 status, result

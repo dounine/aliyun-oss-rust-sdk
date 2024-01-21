@@ -136,7 +136,7 @@ let builder = RequestBuilder::new()
    .with_expire(60);
 oss.delete_object("/hello.txt", builder).unwrap();
 ```
-*/
+ */
 pub mod auth;
 pub mod oss;
 pub mod request;
@@ -149,3 +149,4 @@ pub mod async_impl;
 pub mod blocking;
 pub mod entity;
 pub mod error;
+pub(crate) mod macros;

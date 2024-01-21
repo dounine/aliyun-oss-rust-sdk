@@ -1,16 +1,10 @@
 use hmac::Hmac;
-use cfg_if::cfg_if;
-cfg_if! {
-    if #[cfg(feature= "debug-print")] {
-        use tracing::debug;
-    }
-}
 use sha1::digest::Mac;
 use crate::entity::{PolicyBuilder, PolicyResp};
 use crate::error::OssError;
 use crate::oss::{API, OSS, OSSInfo};
 use crate::request::{RequestBuilder, RequestType};
-use crate::util;
+use crate::{debug, util};
 use crate::util::read_file;
 
 impl OSS {
@@ -30,12 +24,7 @@ impl OSS {
         let key = self.format_key(key);
         let (url, headers) = self.build_request(key.as_str(), build)
             .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
-        //cfg-if debug-print
-        cfg_if! {
-            if #[cfg(feature= "debug-print")] {
-                debug!("get object url: {} headers: {:?}", url, headers);
-            }
-        }
+        debug!("get object url: {} headers: {:?}", url, headers);
         let client = reqwest::blocking::Client::new();
         let response = client.get(url)
             .headers(headers).send()?;
@@ -45,11 +34,7 @@ impl OSS {
         } else {
             let status = response.status();
             let result = response.text()?;
-            cfg_if! {
-                if #[cfg(feature= "debug-print")] {
-                    debug!("get object status: {} error: {}", status,result);
-                }
-            }
+            debug!("get object status: {} error: {}", status,result);
             Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
         };
     }
@@ -98,11 +83,7 @@ impl OSS {
         //text file
         json_data = json_data.replacen("{content_type}", &build.content_type, 1);
         //只允许上传哪个类型文件
-        cfg_if! {
-                if #[cfg(feature= "debug-print")] {
-                    debug!("policy json: {}", json_data);
-                }
-        }
+        debug!("policy json: {}", json_data);
         let base64_policy = util::base64_encode(json_data.as_bytes());
         let mut hasher: Hmac<sha1::Sha1> = Hmac::new_from_slice(self.key_secret().as_bytes())
             .map_err(|_| OssError::Err("Hmac new from slice error".to_string()))?;
@@ -135,11 +116,7 @@ impl OSS {
         let key = self.format_key(key);
         let (url, headers) = self.build_request(key.as_str(), build)
             .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
-        cfg_if! {
-                if #[cfg(feature= "debug-print")] {
-                    debug!("put object from file: {} headers: {:?}", url,headers);
-                }
-        }
+        debug!("put object from file: {} headers: {:?}", url,headers);
         let client = reqwest::blocking::Client::new();
         let response = client.put(url)
             .headers(headers)
@@ -150,11 +127,7 @@ impl OSS {
         } else {
             let status = response.status();
             let result = response.text()?;
-            cfg_if! {
-                if #[cfg(feature= "debug-print")] {
-                    debug!("get object status: {} error: {}", status,result);
-                }
-            }
+            debug!("get object status: {} error: {}", status,result);
             Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
         };
     }
@@ -177,11 +150,7 @@ impl OSS {
         let key = self.format_key(key);
         let (url, headers) = self.build_request(key.as_str(), build)
             .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
-        cfg_if! {
-                if #[cfg(feature= "debug-print")] {
-                    debug!("put object from file: {} headers: {:?}", url,headers);
-                }
-            }
+        debug!("put object from file: {} headers: {:?}", url,headers);
         let client = reqwest::blocking::Client::new();
         let response = client.put(url)
             .headers(headers)
@@ -192,11 +161,7 @@ impl OSS {
         } else {
             let status = response.status();
             let result = response.text()?;
-            cfg_if! {
-                if #[cfg(feature= "debug-print")] {
-                    debug!("get object status: {} error: {}", status,result);
-                }
-            }
+            debug!("get object status: {} error: {}", status,result);
             Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
         };
     }
@@ -217,11 +182,7 @@ impl OSS {
         let key = self.format_key(key);
         let (url, headers) = self.build_request(key.as_str(), build)
             .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
-        cfg_if! {
-                if #[cfg(feature= "debug-print")] {
-                    debug!("put object from file: {} headers: {:?}", url,headers);
-                }
-        }
+        debug!("put object from file: {} headers: {:?}", url,headers);
         let client = reqwest::blocking::Client::new();
         let response = client.delete(url)
             .headers(headers)
@@ -231,11 +192,7 @@ impl OSS {
         } else {
             let status = response.status();
             let result = response.text()?;
-            cfg_if! {
-                if #[cfg(feature= "debug-print")] {
-                    debug!("get object status: {} error: {}", status,result);
-                }
-            }
+            debug!("get object status: {} error: {}", status,result);
             Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
         };
     }
