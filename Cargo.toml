@@ -1,6 +1,6 @@
 [package]
 name = "aliyun-oss-rust-sdk"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["lake"]
 description = "阿里云 © Alibaba Cloud Official Oss SDK (标准库)"
@@ -28,7 +28,6 @@ thiserror = "1.0.30"
 [features]
 default = []
 blocking = ["reqwest/blocking"]
-async = []
 debug-print = ["tracing", "tracing-subscriber"]
 [dev-dependencies]
 dotenvy = "0.15"

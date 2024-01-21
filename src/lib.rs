@@ -19,14 +19,14 @@
 添加依赖
 ```toml
 [dependencies]
-# 同步
-aliyun-oss-rust-sdk = { version = "0.1.6", features = ["blocking"] }
-
 # 异步
-aliyun-oss-rust-sdk = { version = "0.1.6", features = ["async"] }
+aliyun-oss-rust-sdk = { version = "0.1.8"}
+
+# 同步
+aliyun-oss-rust-sdk = { version = "0.1.8", features = ["blocking"] }
 
 # debug日志开启
-aliyun-oss-rust-sdk = { version = "0.1.6", features = ["blocking","debug-print"] }
+aliyun-oss-rust-sdk = { version = "0.1.8", features = ["blocking","debug-print"] }
 ```
 
 ## 文件下载
@@ -143,10 +143,10 @@ pub mod request;
 pub mod url;
 mod util;
 
-#[cfg(feature = "async")]
-pub mod async_impl;
 #[cfg(feature = "blocking")]
 pub mod blocking;
+#[cfg(not(feature = "blocking"))]
+pub mod async_impl;
 pub mod entity;
 pub mod error;
 pub(crate) mod macros;
