@@ -19,13 +19,13 @@
 ```toml
 [dependencies]
 # 异步
-aliyun-oss-rust-sdk = { version = "0.1.9"}
+aliyun-oss-rust-sdk = { version = "x.x.x"}
 
 # 同步
-aliyun-oss-rust-sdk = { version = "0.1.9", features = ["blocking"] }
+aliyun-oss-rust-sdk = { version = "x.x.x", features = ["blocking"] }
 
 # debug日志开启
-aliyun-oss-rust-sdk = { version = "0.1.9", features = ["blocking","debug-print"] }
+aliyun-oss-rust-sdk = { version = "x.x.x", features = ["blocking","debug-print"] }
 ```
 
 ## 文件下载
