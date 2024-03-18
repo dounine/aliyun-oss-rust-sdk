@@ -1,7 +1,7 @@
-use reqwest::header::{AUTHORIZATION, DATE, HeaderMap, InvalidHeaderValue};
-use chrono::{DateTime, Utc};
 use crate::auth::AuthAPI;
-use crate::request::{RequestBuilder};
+use crate::request::RequestBuilder;
+use chrono::{DateTime, Utc};
+use reqwest::header::{HeaderMap, InvalidHeaderValue, AUTHORIZATION, CONTENT_TYPE, DATE};
 
 /// OSS配置
 #[derive(Debug, Clone)]
@@ -25,8 +25,7 @@ pub trait OSSInfo {
 
 pub trait API {
     fn key_urlencode<S: AsRef<str>>(&self, key: S) -> String {
-        key
-            .as_ref()
+        key.as_ref()
             .split("/")
             .map(|x| urlencoding::encode(x))
             .collect::<Vec<_>>()
@@ -108,11 +107,7 @@ impl<'a> OSS {
             format!("/{}", key.as_ref())
         };
         if let Some(cdn) = &build.cdn {
-            format!(
-                "{}{}",
-                cdn,
-                key,
-            )
+            format!("{}{}", cdn, key,)
         } else {
             if self.endpoint().starts_with("https") {
                 format!(
@@ -132,7 +127,11 @@ impl<'a> OSS {
         }
     }
 
-    pub fn build_request<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<(String, HeaderMap), InvalidHeaderValue> {
+    pub fn build_request<S: AsRef<str>>(
+        &self,
+        key: S,
+        build: RequestBuilder,
+    ) -> Result<(String, HeaderMap), InvalidHeaderValue> {
         let mut build = build.clone();
         let host = self.format_host(self.bucket(), key.as_ref().to_string(), &build);
         let mut header = HeaderMap::new();
@@ -140,10 +139,10 @@ impl<'a> OSS {
         header.insert(DATE, date.parse()?);
         build.headers.insert(DATE.to_string(), date);
         let key = key.as_ref();
-        let authorization = self.oss_sign(
-            key,
-            &build,
-        );
+        let authorization = self.oss_sign(key, &build);
+        if let Some(content_type) = build.content_type {
+            header.insert(CONTENT_TYPE, content_type.parse()?);
+        }
         header.insert(AUTHORIZATION, authorization.parse()?);
         Ok((host, header))
     }
@@ -155,8 +154,8 @@ impl<'a> OSS {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Read;
     use crate::error::OssError;
+    use std::io::Read;
 
     fn open_file(file_name: &str) -> Result<String, OssError> {
         let mut file = std::fs::File::open(file_name)?;
