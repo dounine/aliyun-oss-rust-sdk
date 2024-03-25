@@ -8,6 +8,8 @@ async fn main() {
     let oss = OSS::from_env();
     oss.open_debug();
     let build = RequestBuilder::default();
-    let content = oss.get_object("/hello.txt", build).await.unwrap();
-    println!("content: {}", String::from_utf8_lossy(content.as_slice()));
+    let meta = oss.get_object_metadata("/hello.txt", build).await.unwrap();
+    println!("meta: {:?}", meta);
+    // let content = oss.get_object("/hello.txt", build).await.unwrap();
+    // println!("content: {}", String::from_utf8_lossy(content.as_slice()));
 }

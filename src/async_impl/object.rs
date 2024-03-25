@@ -1,7 +1,4 @@
-use base64::engine::general_purpose;
-use base64::Engine;
 use hmac::Hmac;
-use reqwest::StatusCode;
 use sha1::digest::Mac;
 use crate::entity::{PolicyBuilder, PolicyResp};
 use crate::error::OssError;
@@ -264,7 +261,7 @@ impl OSS {
             Ok(metadata)
         } else {
             let status = response.status();
-            let result = response.text()?;
+            let result = response.text().await?;
             debug!("get object status: {} error: {}", status,result);
             Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
         };

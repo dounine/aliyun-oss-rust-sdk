@@ -15,6 +15,7 @@
 5. [上传本地文件](#上传本地文件)
 6. [上传内存文件](#上传内存文件)
 7. [文件删除](#文件删除)
+8. [获取文件元信息](#获取文件元信息)
 
 添加依赖
 ```toml
@@ -109,8 +110,7 @@ use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
 
 let oss = OSS::from_env();
-let builder = RequestBuilder::new()
-    .with_expire(60);
+let builder = RequestBuilder::new();
 let file_path = "./hello.txt";
 oss.put_object_from_file("/hello.txt", file_path, builder).unwrap();
 ```
@@ -120,8 +120,7 @@ use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
 
 let oss = OSS::from_env();
-let builder = RequestBuilder::new()
-    .with_expire(60);
+let builder = RequestBuilder::new();
 let file_path = "./hello.txt";
 let buffer = std::fs::read(file_path).unwrap();
 oss.pub_object_from_buffer("/hello.txt", buffer.as_slice(), builder).unwrap();
@@ -132,9 +131,18 @@ use aliyun_oss_rust_sdk::oss::OSS;
 use aliyun_oss_rust_sdk::request::RequestBuilder;
 
 let oss = OSS::from_env();
-let builder = RequestBuilder::new()
-   .with_expire(60);
+let builder = RequestBuilder::new();
 oss.delete_object("/hello.txt", builder).unwrap();
+```
+## 获取文件元信息
+```rust
+use aliyun_oss_rust_sdk::oss::OSS;
+use aliyun_oss_rust_sdk::request::RequestBuilder;
+
+let oss = OSS::from_env();
+let builder = RequestBuilder::new();
+let meta = oss.get_object_metadata("/hello.txt", builder).unwrap();
+println!("meta: {:?}", meta);
 ```
  */
 pub mod auth;
