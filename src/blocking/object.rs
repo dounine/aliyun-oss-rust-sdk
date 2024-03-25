@@ -198,6 +198,17 @@ impl OSS {
         };
     }
 
+    /// 获取对象元数据
+    /// # 使用例子
+    /// ```rust
+    /// use aliyun_oss_rust_sdk::oss::OSS;
+    /// use aliyun_oss_rust_sdk::request::RequestBuilder;
+    /// let oss = OSS::from_env();
+    /// let builder = RequestBuilder::new()
+    ///    .with_expire(60);
+    /// let metadata = oss.get_object_metadata("/hello.txt", builder).unwrap();
+    /// println!("{:?}", metadata);
+    /// ```
     pub fn get_object_metadata<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<ObjectMetadata, OssError>{
         let mut build = build.clone();
         build.method = RequestType::Head;
@@ -227,7 +238,7 @@ mod tests {
     use crate::oss::OSS;
     use crate::request::RequestBuilder;
 
-    // #[inline]
+    #[inline]
     fn init_log() {
         tracing_subscriber::fmt()
             .with_max_level(tracing::Level::DEBUG)
@@ -299,7 +310,7 @@ mod tests {
         dotenvy::dotenv().ok();
         let oss = OSS::from_env();
         let build = RequestBuilder::new();
-        let metadata = oss.get_object_metadata("/remoteConfig.json", build).unwrap();
+        let metadata = oss.get_object_metadata("/hello.txt", build).unwrap();
         println!("file metadata: {:?}", metadata);
     }
 }

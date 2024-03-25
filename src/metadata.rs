@@ -34,9 +34,9 @@ impl ObjectMetadata {
     }
 
     pub fn get_last_modified(&self) -> Option<DateTime<Utc>> {
-        let val = self.metadata.get("Last-Modified");
+        let val = self.metadata.get("last-modified");
         if val.is_none() {
-            debug!("Can't find <Last-Modified>.");
+            debug!("Can't find <last-modified>.");
             return None;
         }
         let result = chrono::DateTime::parse_from_rfc2822(val.unwrap()).map(|dt| dt.with_timezone(&chrono::Utc));
