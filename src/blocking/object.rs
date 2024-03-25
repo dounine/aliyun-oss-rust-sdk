@@ -6,6 +6,7 @@ use crate::oss::{API, OSS, OSSInfo};
 use crate::request::{RequestBuilder, RequestType};
 use crate::{debug, util};
 use crate::util::read_file;
+use crate::metadata::*;
 
 impl OSS {
     /// 获取对象
@@ -58,7 +59,7 @@ impl OSS {
     /// //file为上传的文件，类型跟with_content_type一致
     /// ```
     pub fn get_upload_object_policy(&self, build: PolicyBuilder) -> Result<PolicyResp, OssError> {
-        let date = chrono::Local::now().naive_local() + chrono::Duration::seconds(build.expire);
+        let date = chrono::Local::now().naive_local() + chrono::Duration::try_seconds(build.expire).unwrap();
         let date_str = date.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
         let mut json_data = r#"
         {
@@ -196,6 +197,39 @@ impl OSS {
             Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
         };
     }
+
+    /// 获取对象元数据
+    /// # 使用例子
+    /// ```rust
+    /// use aliyun_oss_rust_sdk::oss::OSS;
+    /// use aliyun_oss_rust_sdk::request::RequestBuilder;
+    /// let oss = OSS::from_env();
+    /// let builder = RequestBuilder::new()
+    ///    .with_expire(60);
+    /// let metadata = oss.get_object_metadata("/hello.txt", builder).unwrap();
+    /// println!("{:?}", metadata);
+    /// ```
+    pub fn get_object_metadata<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<ObjectMetadata, OssError>{
+        let mut build = build.clone();
+        build.method = RequestType::Head;
+        let key = self.format_key(key);
+        let (url, headers) = self.build_request(key.as_str(), build)
+            .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
+        debug!("put object from file: {} headers: {:?}", url,headers);
+        let client = reqwest::blocking::Client::new();
+        let response = client.head(url)
+            .headers(headers)
+            .send()?;
+        return if response.status().is_success() {
+            let metadata = ObjectMetadata::new(response.headers());
+            Ok(metadata)
+        } else {
+            let status = response.status();
+            let result = response.text()?;
+            debug!("get object status: {} error: {}", status,result);
+            Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
+        };
+    }
 }
 
 #[cfg(test)]
@@ -268,5 +302,15 @@ mod tests {
             .with_cdn("http://cdn.ipadump.com");
         let bytes = oss.get_object("/hello.txt", build).unwrap();
         println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
+    }
+
+    #[test]
+    fn test_get_object_metadata() {
+        init_log();
+        dotenvy::dotenv().ok();
+        let oss = OSS::from_env();
+        let build = RequestBuilder::new();
+        let metadata = oss.get_object_metadata("/hello.txt", build).unwrap();
+        println!("file metadata: {:?}", metadata);
     }
 }

@@ -8,6 +8,7 @@ use crate::error::OssError;
 use crate::oss::{OSSInfo, API, OSS};
 use crate::request::{RequestBuilder, RequestType};
 use crate::{debug, util};
+use crate::metadata::ObjectMetadata;
 use crate::util::read_file;
 
 impl OSS {
@@ -232,6 +233,40 @@ impl OSS {
                 "get object status: {} error: {}",
                 status, result
             )))
+        };
+    }
+
+    /// 获取对象元数据
+    /// # 使用例子
+    /// ```rust
+    /// use aliyun_oss_rust_sdk::oss::OSS;
+    /// use aliyun_oss_rust_sdk::request::RequestBuilder;
+    /// let oss = OSS::from_env();
+    /// let builder = RequestBuilder::new()
+    ///    .with_expire(60);
+    /// let metadata = oss.get_object_metadata("/hello.txt", builder).await.unwrap();
+    /// println!("{:?}", metadata);
+    /// ```
+    pub async fn get_object_metadata<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<ObjectMetadata, OssError>{
+        let mut build = build.clone();
+        build.method = RequestType::Head;
+        let key = self.format_key(key);
+        let (url, headers) = self.build_request(key.as_str(), build)
+            .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
+        debug!("put object from file: {} headers: {:?}", url,headers);
+        let client = reqwest::Client::new();
+        let response = client.head(url)
+            .headers(headers)
+            .send()
+            .await?;
+        return if response.status().is_success() {
+            let metadata = ObjectMetadata::new(response.headers());
+            Ok(metadata)
+        } else {
+            let status = response.status();
+            let result = response.text()?;
+            debug!("get object status: {} error: {}", status,result);
+            Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
         };
     }
 }
