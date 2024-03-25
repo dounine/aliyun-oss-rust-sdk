@@ -59,7 +59,7 @@ impl OSS {
     /// //file为上传的文件，类型跟with_content_type一致
     /// ```
     pub fn get_upload_object_policy(&self, build: PolicyBuilder) -> Result<PolicyResp, OssError> {
-        let date = chrono::Local::now().naive_local() + chrono::Duration::seconds(build.expire);
+        let date = chrono::Local::now().naive_local() + chrono::Duration::try_seconds(build.expire).unwrap();
         let date_str = date.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
         let mut json_data = r#"
         {
@@ -227,7 +227,7 @@ mod tests {
     use crate::oss::OSS;
     use crate::request::RequestBuilder;
 
-    #[inline]
+    // #[inline]
     fn init_log() {
         tracing_subscriber::fmt()
             .with_max_level(tracing::Level::DEBUG)
@@ -291,5 +291,15 @@ mod tests {
             .with_cdn("http://cdn.ipadump.com");
         let bytes = oss.get_object("/hello.txt", build).unwrap();
         println!("file content: {}", String::from_utf8_lossy(bytes.as_slice()));
+    }
+
+    #[test]
+    fn test_get_object_metadata() {
+        init_log();
+        dotenvy::dotenv().ok();
+        let oss = OSS::from_env();
+        let build = RequestBuilder::new();
+        let metadata = oss.get_object_metadata("/remoteConfig.json", build).unwrap();
+        println!("file metadata: {:?}", metadata);
     }
 }
