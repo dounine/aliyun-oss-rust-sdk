@@ -6,6 +6,7 @@ use crate::oss::{API, OSS, OSSInfo};
 use crate::request::{RequestBuilder, RequestType};
 use crate::{debug, util};
 use crate::util::read_file;
+use crate::metadata::*;
 
 impl OSS {
     /// 获取对象
@@ -189,6 +190,28 @@ impl OSS {
             .send()?;
         return if response.status().is_success() {
             Ok(())
+        } else {
+            let status = response.status();
+            let result = response.text()?;
+            debug!("get object status: {} error: {}", status,result);
+            Err(OssError::Err(format!("get object status: {} error: {}", status, result)))
+        };
+    }
+
+    pub fn get_object_metadata<S: AsRef<str>>(&self, key: S, build: RequestBuilder) -> Result<ObjectMetadata, OssError>{
+        let mut build = build.clone();
+        build.method = RequestType::Head;
+        let key = self.format_key(key);
+        let (url, headers) = self.build_request(key.as_str(), build)
+            .map_err(|e| OssError::Err(format!("build request error: {}", e)))?;
+        debug!("put object from file: {} headers: {:?}", url,headers);
+        let client = reqwest::blocking::Client::new();
+        let response = client.head(url)
+            .headers(headers)
+            .send()?;
+        return if response.status().is_success() {
+            let metadata = ObjectMetadata::new(response.headers());
+            Ok(metadata)
         } else {
             let status = response.status();
             let result = response.text()?;

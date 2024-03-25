@@ -141,6 +141,7 @@ pub mod auth;
 pub mod oss;
 pub mod request;
 pub mod url;
+pub mod metadata;
 mod util;
 
 #[cfg(feature = "blocking")]
